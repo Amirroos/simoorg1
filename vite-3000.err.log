@@ -1,0 +1,13 @@
+[33mYou are using Node.js 20.11.1. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.[39m
+[31merror when starting dev server:
+TypeError: crypto.hash is not a function
+    at getHash (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:2444:19)
+    at getLockfileHash (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:32463:9)
+    at getDepHash (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:32466:23)
+    at initDepsOptimizerMetadata (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:31925:53)
+    at createDepsOptimizer (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:34113:17)
+    at new DevEnvironment (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:34893:109)
+    at Object.defaultCreateClientDevEnvironment [as createEnvironment] (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:35305:9)
+    at file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:25469:52
+    at Array.map (<anonymous>)
+    at _createServer (file:///C:/Users/LENOVO.PIESC/Desktop/my%20application/marine-parts-marketplace-analysis%20(1)/node_modules/vite/dist/node/chunks/config.js:25468:58)[39m
