@@ -3,8 +3,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ChevronDown, Waves, Compass, Ship, Sparkles, ArrowLeft, Package } from "lucide-react";
 
-const HERO_POSTER = "https://images.pexels.com/videos/4571674/pexels-photo-4571674.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1080&w=1920";
-const HERO_VIDEO = "https://videos.pexels.com/video-files/4571674/4571674-hd_1920_1080_25fps.mp4";
+const HERO_POSTER = "/media/hero-poster.png";
+const HERO_VIDEO = "/media/hero-deck.mp4";
 
 // قطعات کشتی SVG inline که با اسکرول بیرون می‌آیند
 const ShipParts = ({ scrollProgress }: { scrollProgress: any }) => {

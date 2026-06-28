@@ -38,6 +38,16 @@ import { SellerOrders } from "./pages/seller/SellerOrders";
 import { SellerProfile } from "./pages/seller/SellerProfile";
 import { SellerRFQs } from "./pages/seller/SellerRFQs";
 
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname, search]);
+
+  return null;
+}
+
 function PublicLayout({ onOpenAuth }: { onOpenAuth: () => void }) {
   return (
     <>
@@ -124,6 +134,7 @@ export function App() {
   return (
     <AppProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <AppContent />
       </BrowserRouter>
     </AppProvider>

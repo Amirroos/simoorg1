@@ -61,18 +61,6 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
             </span>
           </div>
 
-          {user && (
-            <Link
-              to={user.role === "buyer" ? "/profile" : user.role === "seller" ? "/seller/profile" : "/admin"}
-              className="hidden md:flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-cyan-100 hover:bg-cyan-400/15 transition"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)]" />
-              <span className="font-bold">
-                سلام {greetingTitle}{firstName ? ` ${firstName}` : ""}
-              </span>
-            </Link>
-          )}
-
           {/* Quick panel access */}
           <div className="relative mr-auto sm:mr-0">
             <button
@@ -449,6 +437,23 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {user && (
+          <div className="pointer-events-none">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 h-0 flex items-start justify-center">
+              <Link
+                to={user.role === "buyer" ? "/profile" : user.role === "seller" ? "/seller/profile" : "/admin"}
+                className="pointer-events-auto group mt-2 flex min-w-0 items-center gap-2 rounded-full border border-cyan-400/25 bg-slate-950/75 px-4 py-1.5 text-cyan-100 shadow-[0_10px_30px_rgba(8,145,178,0.22)] backdrop-blur-xl hover:bg-slate-900/85 hover:border-cyan-300/40 transition"
+              >
+                <span className="w-2 h-2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)] flex-shrink-0" />
+                <span className="truncate text-xs sm:text-sm font-bold">
+                  سلام {greetingTitle}{firstName ? ` ${firstName}` : ""}
+                </span>
+                <UserIcon className="w-3.5 h-3.5 text-cyan-200 opacity-80 group-hover:opacity-100 flex-shrink-0" />
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
