@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { FileSearch, CheckCircle2, Plus, X, Upload, Sparkles, Clock, Users, Target, ArrowLeft } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import { categories, getDetailedSubcategoriesForProductGroup, productGroups, vesselTypes } from "../data/products";
+import { getCategoryIdForProductGroup, getDetailedSubcategoriesForProductGroup, productGroups, vesselTypes } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 
 interface RFQItem {
@@ -77,7 +77,6 @@ export function RFQ() {
     if (!user) return "برای ثبت درخواست ابتدا وارد حساب کاربری شوید.";
     if (user.role !== "buyer") return "ثبت درخواست فقط با حساب خریدار امکان‌پذیر است.";
     if (title.trim().length < 5) return "عنوان درخواست را کامل‌تر وارد کنید.";
-    if (!categoryId) return "دسته کالا را انتخاب کنید.";
     if (!productGroupId) return "گروه محصول را انتخاب کنید.";
     if (!vesselType) return "نوع شناور را انتخاب کنید.";
     if (!neededBy) return "تاریخ نیاز را انتخاب کنید.";
@@ -104,7 +103,7 @@ export function RFQ() {
       productSellerId: inquiryProduct?.sellerId,
       productSellerName: inquiryProduct?.sellerName,
       title: title.trim(),
-      categoryId,
+      categoryId: categoryId || getCategoryIdForProductGroup(productGroupId),
       productGroupId,
       subcategoryId,
       vesselType,
@@ -268,24 +267,7 @@ export function RFQ() {
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      دسته اصلی <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={categoryId}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
-                    >
-                      <option value="">انتخاب کنید</option>
-                      {categories.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                       گروه محصول <span className="text-rose-500">*</span>
@@ -293,7 +275,9 @@ export function RFQ() {
                     <select
                       value={productGroupId}
                       onChange={(e) => {
-                        setProductGroupId(e.target.value);
+                        const nextProductGroupId = e.target.value;
+                        setProductGroupId(nextProductGroupId);
+                        setCategoryId(nextProductGroupId ? getCategoryIdForProductGroup(nextProductGroupId) : "");
                         setSubcategoryId("");
                       }}
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
@@ -311,7 +295,7 @@ export function RFQ() {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      زیر دسته تخصصی
+                      زیرگروه تخصصی
                     </label>
                     <select
                       value={subcategoryId}

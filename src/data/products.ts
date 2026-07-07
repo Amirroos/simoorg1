@@ -39,6 +39,9 @@ export interface Category {
 export interface ProductGroup {
   id: string;
   name: string;
+  icon: string;
+  image: string;
+  categoryId: string;
 }
 
 export interface DetailedSubcategoryGroup {
@@ -229,22 +232,26 @@ export const categories: Category[] = [
 ];
 
 export const productGroups: ProductGroup[] = [
-  { id: "propulsion", name: "محصولات پیشران" },
-  { id: "navigation-aids", name: "محصولات ناوبری و کمک ناوبری" },
-  { id: "pipes-fittings-valves", name: "لوله، اتصالات و والو" },
-  { id: "ventilation-refrigeration", name: "تهویه و یخچال" },
-  { id: "control-monitoring", name: "کنترل و مانیتورینگ" },
-  { id: "deck-operations", name: "تجهیزات بارگیری و عملیات عرشه" },
-  { id: "electrical", name: "الکتریکال" },
-  { id: "safety-rescue", name: "ایمنی و نجات" },
-  { id: "sensors", name: "انواع حسگرها" },
-  { id: "pumps-purifiers", name: "پمپ‌ها و تصفیه‌کننده‌ها" },
-  { id: "accommodation-galley", name: "تجهیزات رفاهی و آشپزخانه" },
-  { id: "telecommunications", name: "مخابرات و ارتباطات" },
-  { id: "hydraulic", name: "هیدرولیک" },
-  { id: "rope-oil-grease-paint", name: "طناب و روغن و گیریس و رنگ و پوشش" },
-  { id: "other-products", name: "سایر محصولات" },
+  { id: "propulsion", name: "محصولات پیشران", icon: "Zap", image: "/media/product-gearbox.webp", categoryId: "engine-room" },
+  { id: "navigation-aids", name: "محصولات ناوبری و کمک ناوبری", icon: "Compass", image: "/media/product-radar.webp", categoryId: "radar-communications" },
+  { id: "pipes-fittings-valves", name: "لوله، اتصالات و والو", icon: "Fuel", image: "/media/cat-rudder.webp", categoryId: "deck-hull" },
+  { id: "ventilation-refrigeration", name: "تهویه و یخچال", icon: "Wind", image: "/media/cat-engine.webp", categoryId: "engine-room" },
+  { id: "control-monitoring", name: "کنترل و مانیتورینگ", icon: "Gauge", image: "/media/product-sonar.webp", categoryId: "electronic" },
+  { id: "deck-operations", name: "تجهیزات بارگیری و عملیات عرشه", icon: "Anchor", image: "/media/product-anchor.webp", categoryId: "deck-hull" },
+  { id: "electrical", name: "الکتریکال", icon: "Zap", image: "/media/product-battery.webp", categoryId: "electronic" },
+  { id: "safety-rescue", name: "ایمنی و نجات", icon: "Shield", image: "/media/product-lifejacket.webp", categoryId: "rescue-safety" },
+  { id: "sensors", name: "انواع حسگرها", icon: "Radar", image: "/media/product-sonar.webp", categoryId: "electronic" },
+  { id: "pumps-purifiers", name: "پمپ‌ها و تصفیه‌کننده‌ها", icon: "RefreshCw", image: "/media/product-pump.webp", categoryId: "engine-room" },
+  { id: "accommodation-galley", name: "تجهیزات رفاهی و آشپزخانه", icon: "Utensils", image: "/media/cat-other.webp", categoryId: "other-marine-equipment" },
+  { id: "telecommunications", name: "مخابرات و ارتباطات", icon: "Radio", image: "/media/cat-navigation.webp", categoryId: "radar-communications" },
+  { id: "hydraulic", name: "هیدرولیک", icon: "Settings", image: "/media/cat-rudder.webp", categoryId: "marine-rudder" },
+  { id: "rope-oil-grease-paint", name: "طناب و روغن و گیریس و رنگ و پوشش", icon: "PaintBucket", image: "/media/product-paint.webp", categoryId: "deck-hull" },
+  { id: "other-products", name: "سایر محصولات", icon: "Package", image: "/media/cat-other.webp", categoryId: "other-marine-equipment" },
 ];
+
+export function getCategoryIdForProductGroup(productGroupId: string) {
+  return productGroups.find((group) => group.id === productGroupId)?.categoryId || "other-marine-equipment";
+}
 
 export const detailedSubcategoryGroups: DetailedSubcategoryGroup[] = [
   {
@@ -425,9 +432,9 @@ export const vesselTypes = [
 export const products: Product[] = [
   {
     id: "p-001",
-    name: "پمپ آب خنک‌کننده موتور دیزل دریایی مدل MWP-350",
+    name: "پمپ سیرکولاسیون آب خنک‌کننده موتور دیزل دریایی MWP-350",
     categoryId: "engine-room",
-    productGroupId: "propulsion",
+    productGroupId: "pumps-purifiers",
     subcategoryId: "pumps",
     brand: "Westerbeke",
     model: "MWP-350",
@@ -459,9 +466,9 @@ export const products: Product[] = [
   },
   {
     id: "p-002",
-    name: "ژنراتور دریایی کمپرز 15 کاوا سه‌فاز",
+    name: "دیزل ژنراتور دریایی سه‌فاز 15 کاوا Comar CG-15K",
     categoryId: "electronic",
-    productGroupId: "propulsion",
+    productGroupId: "electrical",
     subcategoryId: "generators",
     brand: "Comar",
     model: "CG-15K",
@@ -493,7 +500,7 @@ export const products: Product[] = [
   },
   {
     id: "p-003",
-    name: "رادار دریایی Furuno NAVNET مدل TZT-03",
+    name: "رادار ناوبری دریایی Furuno NavNet TZtouch3",
     categoryId: "radar-communications",
     productGroupId: "navigation-aids",
     subcategoryId: "radars",
@@ -527,7 +534,7 @@ export const products: Product[] = [
   },
   {
     id: "p-004",
-    name: "لنگر استیل ضدزنگ 45 کیلوگرمی دانفورث",
+    name: "لنگر دانفورث استیل 45 کیلوگرمی برای عملیات عرشه",
     categoryId: "deck-hull",
     productGroupId: "deck-operations",
     subcategoryId: "deck-fittings-similar",
@@ -560,7 +567,7 @@ export const products: Product[] = [
   },
   {
     id: "p-005",
-    name: "کپسول آتش‌نشانی دریایی 9 کیلوگرمی CO2",
+    name: "کپسول آتش‌نشانی دریایی CO2 ظرفیت 9 کیلوگرم",
     categoryId: "rescue-safety",
     productGroupId: "safety-rescue",
     subcategoryId: "fire-extinguishers",
@@ -593,7 +600,7 @@ export const products: Product[] = [
   },
   {
     id: "p-006",
-    name: "توربوشارژر دریایی مان مدل 4T-30",
+    name: "توربوشارژر موتور دیزل دریایی MAN B&W مدل 4T-30",
     categoryId: "engine-room",
     productGroupId: "propulsion",
     subcategoryId: "engine",
@@ -626,8 +633,8 @@ export const products: Product[] = [
   },
   {
     id: "p-007",
-    name: "سونار ماهی‌یابی Garmin Striker Vivid 7dv",
-    categoryId: "fishing-equipment",
+    name: "اکوساندر و فیش‌فایندر Garmin Striker Vivid 7dv",
+    categoryId: "radar-communications",
     productGroupId: "navigation-aids",
     subcategoryId: "echo-sounder",
     brand: "Garmin",
@@ -659,7 +666,7 @@ export const products: Product[] = [
   },
   {
     id: "p-008",
-    name: "باتری دریایی خشک 200 آمپر Varta",
+    name: "باتری دریایی سیلد 200 آمپرساعت Varta Marine",
     categoryId: "electronic",
     productGroupId: "electrical",
     subcategoryId: "ups",
@@ -692,7 +699,7 @@ export const products: Product[] = [
   },
   {
     id: "p-009",
-    name: "پمپ سوخت دیزل دریایی Bosch",
+    name: "پمپ فشارقوی سوخت دیزل دریایی Bosch CP4-M",
     categoryId: "engine-room",
     productGroupId: "pumps-purifiers",
     subcategoryId: "pumps",
@@ -724,7 +731,7 @@ export const products: Product[] = [
   },
   {
     id: "p-010",
-    name: "جلیقه نجات دریایی تأیید SOLAS",
+    name: "جلیقه نجات دریایی SOLAS با نوار بازتابنده",
     categoryId: "rescue-safety",
     productGroupId: "safety-rescue",
     subcategoryId: "life-jackets",
@@ -757,7 +764,7 @@ export const products: Product[] = [
   },
   {
     id: "p-011",
-    name: "گیربکس دریایی Twin Disc مدل MG-518",
+    name: "گیربکس کاهنده دریایی Twin Disc MG-518",
     categoryId: "engine-room",
     productGroupId: "propulsion",
     subcategoryId: "gearbox",
@@ -789,7 +796,7 @@ export const products: Product[] = [
   },
   {
     id: "p-012",
-    name: "رنگ ضدخوردگی دریایی جوتون",
+    name: "رنگ ضدخزه و ضدخوردگی بدنه شناور Jotun SeaForce",
     categoryId: "deck-hull",
     productGroupId: "rope-oil-grease-paint",
     subcategoryId: "paint-coating",
@@ -846,6 +853,10 @@ export function normalizeProductTaxonomy(product: Product): Product {
   const normalizedCategoryId = validCategory
     ? product.categoryId
     : mappedCategory?.categoryId || "other-marine-equipment";
+  const normalizedProductGroupId =
+    product.productGroupId && productGroups.some((group) => group.id === product.productGroupId)
+      ? product.productGroupId
+      : mappedCategory?.productGroupId || product.productGroupId || "other-products";
   const nextVesselTypes = product.vesselTypes
     .map((vessel) => legacyVesselMap[vessel] || vessel)
     .filter((vessel, index, all) => vesselTypes.includes(vessel) && all.indexOf(vessel) === index);
@@ -856,10 +867,8 @@ export function normalizeProductTaxonomy(product: Product): Product {
     ...(validCategory
       ? {}
       : mappedCategory || { categoryId: "other-marine-equipment", productGroupId: "other-products" }),
-    productGroupId:
-      product.productGroupId && productGroups.some((group) => group.id === product.productGroupId)
-        ? product.productGroupId
-        : mappedCategory?.productGroupId || product.productGroupId || "other-products",
+    categoryId: getCategoryIdForProductGroup(normalizedProductGroupId),
+    productGroupId: normalizedProductGroupId,
     subcategoryId:
       product.subcategoryId && detailedSubcategories.some((subcategory) => subcategory.id === product.subcategoryId)
         ? product.subcategoryId

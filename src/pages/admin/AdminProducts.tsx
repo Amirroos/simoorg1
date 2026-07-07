@@ -3,17 +3,17 @@ import { motion } from "framer-motion";
 import { Search, Trash2, Eye, Package, AlertTriangle, Hash } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useApp } from "../../contexts/AppContext";
-import { categories, formatPriceToman } from "../../data/products";
+import { formatPriceToman, productGroups } from "../../data/products";
 
 export function AdminProducts() {
   const { products, deleteProduct, updateProduct } = useApp();
   const [search, setSearch] = useState("");
-  const [filterCat, setFilterCat] = useState("");
+  const [filterGroup, setFilterGroup] = useState("");
   const [filterStock, setFilterStock] = useState<"all" | "in" | "low" | "out">("all");
 
   const filtered = products.filter((p) => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !p.brand.toLowerCase().includes(search.toLowerCase())) return false;
-    if (filterCat && p.categoryId !== filterCat) return false;
+    if (filterGroup && p.productGroupId !== filterGroup) return false;
     if (filterStock === "in" && p.stock < 5) return false;
     if (filterStock === "low" && (p.stock === 0 || p.stock >= 5)) return false;
     if (filterStock === "out" && p.stock > 0) return false;
@@ -59,13 +59,13 @@ export function AdminProducts() {
             />
           </div>
           <select
-            value={filterCat}
-            onChange={(e) => setFilterCat(e.target.value)}
+            value={filterGroup}
+            onChange={(e) => setFilterGroup(e.target.value)}
             className="px-4 py-2.5 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none text-sm"
           >
-            <option value="">همه دسته‌ها</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
+            <option value="">همه گروه‌ها</option>
+            {productGroups.map((group) => (
+              <option key={group.id} value={group.id}>{group.name}</option>
             ))}
           </select>
           <select

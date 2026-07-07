@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, Star, MapPin, CheckCircle2, Truck } from "lucide-react";
 import type { Product } from "../data/products";
-import { categories, formatPriceToman, productGroups } from "../data/products";
+import { formatPriceToman, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 
 interface ProductCardProps {
@@ -13,7 +13,6 @@ interface ProductCardProps {
 export function ProductCard({ product, index = 0 }: ProductCardProps) {
   const { addToCart, favorites, toggleFavorite, user } = useApp();
   const isFavorite = favorites.includes(product.id);
-  const category = categories.find((item) => item.id === product.categoryId);
   const productGroup = productGroups.find((item) => item.id === product.productGroupId);
 
   return (
@@ -110,18 +109,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           {product.shortDesc}
         </p>
 
-        {(category || productGroup) && (
+        {productGroup && (
           <div className="flex flex-wrap gap-1 mb-3">
-            {category && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-50 text-slate-700 border border-slate-100">
-                {category.name}
-              </span>
-            )}
-            {productGroup && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">
-                {productGroup.name}
-              </span>
-            )}
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100">
+              {productGroup.name}
+            </span>
           </div>
         )}
 

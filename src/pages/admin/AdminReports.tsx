@@ -11,7 +11,7 @@ import {
   Award,
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
-import { categories, formatPriceToman } from "../../data/products";
+import { formatPriceToman, productGroups } from "../../data/products";
 
 export function AdminReports() {
   const { products, users, orders } = useApp();
@@ -49,13 +49,13 @@ export function AdminReports() {
   });
   const topSellers = Object.values(sellerSales).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
-  // توزیع بر اساس دسته
-  const categoryStats = categories.map((c) => {
-    const cnt = products.filter((p) => p.categoryId === c.id).length;
-    return { name: c.name, count: cnt };
+  // توزیع بر اساس گروه محصول
+  const productGroupStats = productGroups.map((group) => {
+    const cnt = products.filter((p) => p.productGroupId === group.id).length;
+    return { name: group.name, count: cnt };
   }).sort((a, b) => b.count - a.count);
 
-  const maxCatCount = Math.max(...categoryStats.map((c) => c.count), 1);
+  const maxGroupCount = Math.max(...productGroupStats.map((group) => group.count), 1);
 
   // KPI ها
   const kpis = [
@@ -208,7 +208,7 @@ export function AdminReports() {
         </motion.div>
       </div>
 
-      {/* Category Distribution */}
+      {/* Product Group Distribution */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -216,10 +216,10 @@ export function AdminReports() {
       >
         <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-emerald-600" />
-          توزیع محصولات بر اساس دسته
+          توزیع محصولات بر اساس گروه محصول
         </h3>
         <div className="space-y-3">
-          {categoryStats.map((c) => (
+          {productGroupStats.map((c) => (
             <div key={c.name}>
               <div className="flex items-center justify-between mb-1 text-xs">
                 <span className="font-semibold text-slate-700">{c.name}</span>
@@ -228,7 +228,7 @@ export function AdminReports() {
               <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(c.count / maxCatCount) * 100}%` }}
+                  animate={{ width: `${(c.count / maxGroupCount) * 100}%` }}
                   transition={{ duration: 0.8 }}
                   className="h-full bg-gradient-to-l from-cyan-500 to-blue-600 rounded-full"
                 />

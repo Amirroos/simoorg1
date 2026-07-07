@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  Anchor,
   ShoppingCart,
   User as UserIcon,
   LogOut,
@@ -35,7 +34,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
   const navLinks = [
     { to: "/", label: "خانه" },
     { to: "/products", label: "محصولات" },
-    { to: "/categories", label: "دسته‌بندی" },
+    { to: "/categories", label: "گروه محصول" },
     { to: "/rfq", label: "ثبت استعلام (RFQ)" },
   ];
 
@@ -125,13 +124,16 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-700 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-500/50 transition">
-                <Anchor className="w-5 h-5 text-white" />
-                <div className="absolute -inset-1 rounded-xl bg-cyan-400/30 blur opacity-0 group-hover:opacity-100 transition" />
+              <div className="relative w-12 h-12 rounded-full bg-white overflow-hidden ring-1 ring-white/30 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition">
+                <img
+                  src="/media/mohr-logo.png"
+                  alt="لوگوی سامانه"
+                  className="w-full h-full rounded-full object-cover"
+                />
               </div>
               <div className="hidden sm:block">
                 <div className="text-white font-bold text-lg leading-tight">سیمرغ تأمین دریا</div>
-                <div className="text-cyan-300 text-[10px] leading-tight">بازارگاه قطعات شناورها</div>
+                <div className="text-cyan-300 text-[10px] leading-tight">بازارگاه تجهیزات و قطعات شناورها</div>
               </div>
             </Link>
 

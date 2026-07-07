@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { Search, SlidersHorizontal, Grid3x3, List, Sliders, X } from "lucide-react";
 import { ProductCard } from "../components/ProductCard";
 import {
-  categories,
   detailedSubcategories,
+  getDetailedSubcategoriesForProductGroup,
   productGroups,
   vesselTypes,
 } from "../data/products";
@@ -14,13 +14,11 @@ import { useApp } from "../contexts/AppContext";
 export function Products() {
   const { products } = useApp();
   const [params, setParams] = useSearchParams();
-  const categoryParam = params.get("category") || "";
   const groupParam = params.get("group") || "";
   const subcategoryParam = params.get("subcategory") || "";
   const sortParam = params.get("sort") || "";
 
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam);
   const [selectedGroup, setSelectedGroup] = useState(groupParam);
   const [selectedSubcategory, setSelectedSubcategory] = useState(subcategoryParam);
   const [selectedVessel, setSelectedVessel] = useState("");
@@ -32,10 +30,9 @@ export function Products() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
-    setSelectedCategory(categoryParam);
     setSelectedGroup(groupParam);
     setSelectedSubcategory(subcategoryParam);
-  }, [categoryParam, groupParam, subcategoryParam]);
+  }, [groupParam, subcategoryParam]);
 
   useEffect(() => {
     if (sortParam === "new") setSortBy("newest");
@@ -48,7 +45,6 @@ export function Products() {
       const q = search.trim().toLowerCase();
       result = result.filter(
         (p) => {
-          const categoryName = categories.find((category) => category.id === p.categoryId)?.name || "";
           const groupName = productGroups.find((group) => group.id === p.productGroupId)?.name || "";
           const subcategoryName = detailedSubcategories.find((subcategory) => subcategory.id === p.subcategoryId)?.name || "";
           return (
@@ -56,16 +52,11 @@ export function Products() {
           p.brand.toLowerCase().includes(q) ||
           p.model.toLowerCase().includes(q) ||
           p.shortDesc.toLowerCase().includes(q) ||
-          categoryName.toLowerCase().includes(q) ||
           groupName.toLowerCase().includes(q) ||
           subcategoryName.toLowerCase().includes(q)
           );
         }
       );
-    }
-
-    if (selectedCategory) {
-      result = result.filter((p) => p.categoryId === selectedCategory);
     }
 
     if (selectedGroup) {
@@ -108,11 +99,10 @@ export function Products() {
     }
 
     return result;
-  }, [search, selectedCategory, selectedGroup, selectedSubcategory, selectedVessel, priceRange, availability, condition, sortBy]);
+  }, [search, selectedGroup, selectedSubcategory, selectedVessel, priceRange, availability, condition, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
-    setSelectedCategory("");
     setSelectedGroup("");
     setSelectedSubcategory("");
     setSelectedVessel("");
@@ -134,7 +124,7 @@ export function Products() {
           >
             <h1 className="text-3xl md:text-4xl font-black mb-2">بازارگاه قطعات و تجهیزات</h1>
             <p className="text-slate-300 mb-6">
-              بیش از {products.length.toLocaleString("fa-IR")} قطعه از {categories.length.toLocaleString("fa-IR")} دسته اصلی
+              بیش از {products.length.toLocaleString("fa-IR")} محصول در {productGroups.length.toLocaleString("fa-IR")} گروه محصول
             </p>
 
             {/* Search Bar */}
@@ -153,30 +143,33 @@ export function Products() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Categories Tabs */}
+        {/* Product Group Tabs */}
         <div className="mb-6 -mx-4 px-4 overflow-x-auto no-scrollbar">
           <div className="flex gap-2 min-w-max pb-2">
             <button
-              onClick={() => setSelectedCategory("")}
+              onClick={() => setSelectedGroup("")}
               className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
-                selectedCategory === ""
+                selectedGroup === ""
                   ? "bg-slate-900 text-white"
                   : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
               }`}
             >
-              همه دسته‌ها
+              همه گروه‌ها
             </button>
-            {categories.map((cat) => (
+            {productGroups.map((group) => (
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id === selectedCategory ? "" : cat.id)}
+                key={group.id}
+                onClick={() => {
+                  setSelectedGroup(group.id === selectedGroup ? "" : group.id);
+                  setSelectedSubcategory("");
+                }}
                 className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
-                  selectedCategory === cat.id
+                  selectedGroup === group.id
                     ? "bg-cyan-700 text-white"
                     : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
-                {cat.name}
+                {group.name}
               </button>
             ))}
           </div>
@@ -351,6 +344,10 @@ interface FilterPanelProps {
 }
 
 function FilterPanel(props: FilterPanelProps) {
+  const visibleSubcategories = props.selectedGroup
+    ? getDetailedSubcategoriesForProductGroup(props.selectedGroup)
+    : detailedSubcategories;
+
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-2xl p-4 border border-slate-100">
@@ -388,9 +385,9 @@ function FilterPanel(props: FilterPanelProps) {
       </div>
 
       <div className="bg-white rounded-2xl p-4 border border-slate-100">
-        <h4 className="font-bold text-sm mb-3">زیر دسته تخصصی</h4>
+        <h4 className="font-bold text-sm mb-3">زیرگروه تخصصی</h4>
         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-          {detailedSubcategories.map((subcategory) => (
+          {visibleSubcategories.map((subcategory) => (
             <label key={subcategory.id} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"

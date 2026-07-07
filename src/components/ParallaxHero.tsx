@@ -269,7 +269,7 @@ export function ParallaxHero() {
             transition={{ delay: 0.4 }}
             className="text-4xl sm:text-5xl md:text-7xl font-black text-white leading-tight mb-6"
           >
-            تأمین قطعات
+            تأمین تجهیزات و قطعات
             <br />
             <span className="gradient-text">شناورها در یک کلیک</span>
           </motion.h1>

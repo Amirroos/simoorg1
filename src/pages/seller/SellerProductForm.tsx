@@ -17,7 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
-import { categories, getDetailedSubcategoriesForProductGroup, marineImage, productGroups, vesselTypes } from "../../data/products";
+import { getCategoryIdForProductGroup, getDetailedSubcategoriesForProductGroup, marineImage, productGroups, vesselTypes } from "../../data/products";
 import type { Product } from "../../data/products";
 
 const SUGGESTED_TAGS = [
@@ -134,7 +134,6 @@ export function SellerProductForm() {
     setError("");
 
     if (form.name.length < 5) return setError("نام محصول باید حداقل ۵ کاراکتر باشد");
-    if (!form.categoryId) return setError("دسته‌بندی را انتخاب کنید");
     if (!form.productGroupId) return setError("گروه محصول را انتخاب کنید");
     if (form.brand.length < 2) return setError("برند را وارد کنید");
     if (form.hasPrice && form.price <= 0) return setError("قیمت باید بزرگتر از صفر باشد یا حالت 'استعلامی' را انتخاب کنید");
@@ -155,7 +154,7 @@ export function SellerProductForm() {
     } else {
       addProduct({
         name: form.name,
-        categoryId: form.categoryId,
+        categoryId: form.categoryId || getCategoryIdForProductGroup(form.productGroupId),
         productGroupId: form.productGroupId,
         subcategoryId: form.subcategoryId,
         brand: form.brand,
@@ -246,41 +245,32 @@ export function SellerProductForm() {
                 />
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    دسته اصلی <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={form.categoryId}
-                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-purple-500 outline-none text-sm"
-                  >
-                    <option value="">انتخاب کنید</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    گروه محصول <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={form.productGroupId}
-                    onChange={(e) => setForm({ ...form, productGroupId: e.target.value, subcategoryId: "" })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-purple-500 outline-none text-sm"
-                  >
-                    <option value="">انتخاب کنید</option>
-                    {productGroups.map((group) => (
-                      <option key={group.id} value={group.id}>{group.name}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  گروه محصول <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={form.productGroupId}
+                  onChange={(e) => {
+                    const productGroupId = e.target.value;
+                    setForm({
+                      ...form,
+                      productGroupId,
+                      categoryId: productGroupId ? getCategoryIdForProductGroup(productGroupId) : "",
+                      subcategoryId: "",
+                    });
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-purple-500 outline-none text-sm"
+                >
+                  <option value="">انتخاب کنید</option>
+                  {productGroups.map((group) => (
+                    <option key={group.id} value={group.id}>{group.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">زیر دسته تخصصی</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">زیرگروه تخصصی</label>
                 <select
                   value={form.subcategoryId}
                   onChange={(e) => setForm({ ...form, subcategoryId: e.target.value })}

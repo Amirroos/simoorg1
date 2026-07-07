@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Flame, Shield, Truck, Award, Sparkles, Zap, Anchor, Compass, Zap as Zap2, LifeBuoy, Fuel, TrendingUp, Users, FileSearch, Star } from "lucide-react";
+import { ArrowLeft, Flame, Shield, Truck, Award, Sparkles, Zap, Anchor, Compass, Zap as Zap2, LifeBuoy, Fuel, TrendingUp, Users, FileSearch, Star, Radar, Radio, Settings, PaintBucket, Package, Wind, Gauge, RefreshCw, Utensils } from "lucide-react";
 import { ParallaxHero } from "../components/ParallaxHero";
 import { ProductCard } from "../components/ProductCard";
-import { categories, productGroups, sellers } from "../data/products";
+import { productGroups, sellers } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 
 const iconMap: Record<string, any> = {
@@ -13,6 +13,15 @@ const iconMap: Record<string, any> = {
   Compass,
   Shield,
   Fuel,
+  Radar,
+  Radio,
+  Settings,
+  PaintBucket,
+  Package,
+  Wind,
+  Gauge,
+  RefreshCw,
+  Utensils,
 };
 
 export function Home() {
@@ -60,16 +69,16 @@ export function Home() {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Product Groups */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
         <div className="flex items-end justify-between mb-8">
           <div>
             <div className="inline-flex items-center gap-2 text-cyan-700 text-sm font-semibold mb-2">
               <Compass className="w-4 h-4" />
-              دسته‌بندی‌ها
+              گروه‌های محصول
             </div>
             <h2 className="text-3xl md:text-4xl font-black text-slate-900">
-              همه قطعات در یک نگاه
+              تجهیزات و قطعات دریایی در یک نگاه
             </h2>
           </div>
           <Link
@@ -82,23 +91,23 @@ export function Home() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((cat, i) => {
-            const Icon = iconMap[cat.icon] || Zap;
+          {productGroups.map((group, i) => {
+            const Icon = iconMap[group.icon] || Package;
             return (
               <motion.div
-                key={cat.id}
+                key={group.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
               >
                 <Link
-                  to={`/products?category=${cat.id}`}
+                  to={`/products?group=${group.id}`}
                   className="group relative block overflow-hidden rounded-2xl aspect-square"
                 >
                   <img
-                    src={cat.image}
-                    alt={cat.name}
+                    src={group.image}
+                    alt={group.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
@@ -106,9 +115,9 @@ export function Home() {
                     <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center mb-2 group-hover:bg-cyan-500 group-hover:rotate-6 transition-all">
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <h3 className="text-white font-bold text-sm leading-6">{cat.name}</h3>
+                    <h3 className="text-white font-bold text-sm leading-6">{group.name}</h3>
                     <p className="text-slate-200 text-xs mt-0.5">
-                      {productGroups.length.toLocaleString("fa-IR")} گروه محصول
+                      مشاهده محصولات
                     </p>
                   </div>
                 </Link>

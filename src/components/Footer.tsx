@@ -1,6 +1,6 @@
 import { Anchor, Phone, Mail, MapPin, Send, MessageCircle, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
-import { categories } from "../data/products";
+import { productGroups } from "../data/products";
 
 export function Footer() {
   return (
@@ -50,7 +50,7 @@ export function Footer() {
             <h4 className="text-white font-bold mb-4 text-sm">دسترسی سریع</h4>
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/products" className="hover:text-cyan-300 transition">محصولات</Link></li>
-              <li><Link to="/categories" className="hover:text-cyan-300 transition">دسته‌بندی‌ها</Link></li>
+              <li><Link to="/categories" className="hover:text-cyan-300 transition">گروه‌های محصول</Link></li>
               <li><Link to="/rfq" className="hover:text-cyan-300 transition">درخواست استعلام</Link></li>
               <li><Link to="/orders" className="hover:text-cyan-300 transition">سفارش‌های من</Link></li>
               <li><a href="#" className="hover:text-cyan-300 transition">فروشندگان برتر</a></li>
@@ -58,14 +58,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Product Groups */}
           <div>
-            <h4 className="text-white font-bold mb-4 text-sm">دسته‌بندی‌ها</h4>
+            <h4 className="text-white font-bold mb-4 text-sm">گروه محصول</h4>
             <ul className="space-y-2.5 text-sm">
-              {categories.map((category) => (
-                <li key={category.id}>
-                  <Link to={`/products?category=${category.id}`} className="hover:text-cyan-300 transition">
-                    {category.name}
+              {productGroups.slice(0, 10).map((group) => (
+                <li key={group.id}>
+                  <Link to={`/products?group=${group.id}`} className="hover:text-cyan-300 transition">
+                    {group.name}
                   </Link>
                 </li>
               ))}

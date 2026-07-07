@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   Package,
 } from "lucide-react";
-import { categories, detailedSubcategories, formatPriceToman, productGroups } from "../data/products";
+import { detailedSubcategories, formatPriceToman, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 import { ProductCard } from "../components/ProductCard";
 
@@ -32,13 +32,12 @@ export function ProductDetail() {
   const [stockError, setStockError] = useState("");
 
   const product = products.find((p) => p.id === id);
-  const category = product ? categories.find((c) => c.id === product.categoryId) : null;
   const productGroup = product ? productGroups.find((group) => group.id === product.productGroupId) : null;
   const subcategory = product ? detailedSubcategories.find((item) => item.id === product.subcategoryId) : null;
   const productReviews = reviews.filter((r) => r.productId === id);
   const relatedProducts = product
     ? products
-        .filter((p) => p.categoryId === product.categoryId && p.id !== product.id)
+        .filter((p) => p.productGroupId === product.productGroupId && p.id !== product.id)
         .slice(0, 4)
     : [];
   const isFavorite = product ? favorites.includes(product.id) : false;
@@ -97,14 +96,6 @@ export function ProductDetail() {
             <Link to="/" className="hover:text-cyan-700 whitespace-nowrap">خانه</Link>
             <ChevronLeft className="w-3 h-3 flex-shrink-0" />
             <Link to="/products" className="hover:text-cyan-700 whitespace-nowrap">محصولات</Link>
-            {category && (
-              <>
-                <ChevronLeft className="w-3 h-3 flex-shrink-0" />
-                <Link to={`/products?category=${category.id}`} className="hover:text-cyan-700 whitespace-nowrap">
-                  {category.name}
-                </Link>
-              </>
-            )}
             {productGroup && (
               <>
                 <ChevronLeft className="w-3 h-3 flex-shrink-0" />
@@ -201,15 +192,10 @@ export function ProductDetail() {
               </div>
 
               {/* Vessel compatibility */}
-              {(category || productGroup || subcategory) && (
+              {(productGroup || subcategory) && (
                 <div className="mt-4">
-                  <div className="text-sm text-slate-600 mb-2 font-medium">دسته‌بندی:</div>
+                  <div className="text-sm text-slate-600 mb-2 font-medium">گروه محصول:</div>
                   <div className="flex flex-wrap gap-2">
-                    {category && (
-                      <span className="px-3 py-1 text-xs rounded-full bg-slate-50 text-slate-700 border border-slate-100 font-semibold">
-                        {category.name}
-                      </span>
-                    )}
                     {productGroup && (
                       <span className="px-3 py-1 text-xs rounded-full bg-cyan-50 text-cyan-700 border border-cyan-100 font-semibold">
                         {productGroup.name}
