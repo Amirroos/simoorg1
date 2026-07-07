@@ -3,6 +3,7 @@ import { ShoppingCart, Clock, Truck, CheckCircle2, Package } from "lucide-react"
 import { useApp } from "../../contexts/AppContext";
 import { useSellerProducts } from "./SellerLayout";
 import { formatPriceToman } from "../../data/products";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function SellerOrders() {
   const { orders, updateOrderStatus } = useApp();
@@ -67,7 +68,7 @@ export function SellerOrders() {
                         </span>
                       </div>
                       <div className="text-xs text-slate-500">
-                        {o.userName} • {o.userMobile} • {new Date(o.createdAt).toLocaleDateString("fa-IR")}
+                        {o.userName} • {o.userMobile} • {formatPersianDate(o.createdAt)}
                       </div>
                     </div>
                   </div>

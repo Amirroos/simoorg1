@@ -19,6 +19,7 @@ import {
   Search,
 } from "lucide-react";
 import { useApp, type User } from "../../contexts/AppContext";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function AdminUsers() {
   const { users, orders, rfqs, deleteUser } = useApp();
@@ -37,7 +38,8 @@ export function AdminUsers() {
         !u.companyName?.toLowerCase().includes(q) &&
         !maritime?.rank?.toLowerCase().includes(q) &&
         !maritime?.homePort?.toLowerCase().includes(q) &&
-        !maritime?.vesselType?.toLowerCase().includes(q)
+        !maritime?.vesselType?.toLowerCase().includes(q) &&
+        !maritime?.vesselTypes?.some((type) => type.toLowerCase().includes(q))
       )
         return false;
     }
@@ -171,7 +173,7 @@ export function AdminUsers() {
                           <div className="space-y-1 text-xs text-slate-600">
                             <div className="flex items-center gap-1.5">
                               <BadgeCheck className="w-3.5 h-3.5 text-cyan-600" />
-                              <span>{maritime.rank || "بدون رتبه"} • {maritime.vesselType || "بدون شناور"}</span>
+                              <span>{maritime.rank || "بدون رتبه"} • {maritime.vesselTypes?.join("، ") || maritime.vesselType || "بدون شناور"}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <MapPin className="w-3.5 h-3.5 text-cyan-600" />
@@ -203,7 +205,7 @@ export function AdminUsers() {
                         ) : (
                           <div className="inline-flex items-center gap-1 text-xs text-slate-600">
                             <Calendar className="w-3 h-3 text-slate-400" />
-                            {new Date(u.createdAt).toLocaleDateString("fa-IR")}
+                            {formatPersianDate(u.createdAt)}
                           </div>
                         )}
                       </td>
@@ -296,7 +298,7 @@ function UserProfileModal({ user, orderCount, rfqCount, onClose }: { user: User;
               <Info label="موبایل" value={user.mobile} ltr />
               <Info label="ایمیل" value={user.email || "ثبت نشده"} ltr />
               <Info label="کد ملی" value={user.nationalId || "ثبت نشده"} ltr />
-              <Info label="تاریخ تولد" value={user.birthDate ? new Date(user.birthDate).toLocaleDateString("fa-IR") : "ثبت نشده"} />
+              <Info label="تاریخ تولد" value={formatPersianDate(user.birthDate)} />
               <Info label="شهر" value={user.city || user.location || "ثبت نشده"} />
               <Info label="آدرس" value={user.address || "ثبت نشده"} />
             </DetailPanel>
@@ -304,7 +306,7 @@ function UserProfileModal({ user, orderCount, rfqCount, onClose }: { user: User;
             <DetailPanel title="پرونده دریانوردی" icon={Ship}>
               <Info label="رتبه / نقش" value={maritime?.rank || "ثبت نشده"} />
               <Info label="کد دریانوردی" value={maritime?.seafarerCode || "ثبت نشده"} ltr />
-              <Info label="نوع شناور" value={maritime?.vesselType || "ثبت نشده"} />
+              <Info label="نوع شناور" value={maritime?.vesselTypes?.join("، ") || maritime?.vesselType || "ثبت نشده"} />
               <Info label="نام شناور" value={maritime?.vesselName || "ثبت نشده"} />
               <Info label="IMO / شماره ثبت" value={maritime?.vesselImo || "ثبت نشده"} ltr />
               <Info label="بندر فعالیت" value={maritime?.homePort || "ثبت نشده"} />
@@ -321,7 +323,7 @@ function UserProfileModal({ user, orderCount, rfqCount, onClose }: { user: User;
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               <Info label="شماره گواهینامه" value={maritime?.licenseNumber || "ثبت نشده"} ltr />
-              <Info label="اعتبار گواهینامه" value={maritime?.licenseExpiresAt ? new Date(maritime.licenseExpiresAt).toLocaleDateString("fa-IR") : "ثبت نشده"} />
+              <Info label="اعتبار گواهینامه" value={formatPersianDate(maritime?.licenseExpiresAt)} />
               <Info label="تماس اضطراری" value={maritime?.emergencyContact || "ثبت نشده"} />
               <Info label="موبایل اضطراری" value={maritime?.emergencyMobile || "ثبت نشده"} ltr />
             </div>

@@ -20,6 +20,7 @@ import {
 import { detailedSubcategories, formatPriceToman, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 import { ProductCard } from "../components/ProductCard";
+import { formatPersianDate } from "../utils/persianDate";
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -362,7 +363,7 @@ export function ProductDetail() {
                                 </div>
                                 <div>
                                   <div className="font-bold text-sm text-slate-800">{r.userName}</div>
-                                  <div className="text-xs text-slate-500">{r.createdAt}</div>
+                                  <div className="text-xs text-slate-500">{formatPersianDate(r.createdAt)}</div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-0.5">

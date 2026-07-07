@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useApp, isRFQPublished } from "../contexts/AppContext";
 import { FileSearch, Clock, Package, CheckCircle2 } from "lucide-react";
 import { formatPriceToman } from "../data/products";
+import { formatPersianDate } from "../utils/persianDate";
 
 export function BuyerRFQs() {
   const { user, rfqs } = useApp();
@@ -59,7 +60,7 @@ export function BuyerRFQs() {
                       <h3 className="text-lg font-bold text-slate-900 mb-1">{rfq.title}</h3>
                       <div className="text-xs text-slate-500 flex items-center gap-2">
                         <Clock className="w-3.5 h-3.5" />
-                        ثبت: {new Date(rfq.createdAt).toLocaleDateString("fa-IR")}
+                        ثبت: {formatPersianDate(rfq.createdAt)}
                       </div>
                     </div>
                   </div>

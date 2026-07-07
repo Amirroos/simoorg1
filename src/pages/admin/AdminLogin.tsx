@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, User as UserIcon, KeyRound, Loader2, AlertCircle, Anchor } from "lucide-react";
+import { Shield, User as UserIcon, KeyRound, Loader2, AlertCircle } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 
 export function AdminLogin() {
@@ -50,12 +50,19 @@ export function AdminLogin() {
         className="relative w-full max-w-md"
       >
         <Link to="/" className="flex items-center justify-center gap-2 text-white mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-700 flex items-center justify-center shadow-2xl shadow-cyan-500/40">
-            <Anchor className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-full bg-white overflow-hidden ring-1 ring-white/40 shadow-2xl shadow-cyan-500/40">
+            <img src="/media/mohr-logo.png" alt="لوگوی سامانه" className="w-full h-full rounded-full object-cover" />
           </div>
           <div>
             <div className="font-black text-lg">سیمرغ تأمین دریا</div>
-            <div className="text-xs text-cyan-300">Marine Supply Platform</div>
+            <a
+              href="http://simoorgh3.runflare.run/"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-cyan-300 hover:text-cyan-100 transition"
+            >
+              بازارگاه تجهیزات و قطعات شناورها
+            </a>
           </div>
         </Link>
 

@@ -4,6 +4,7 @@ import { Package, ShoppingCart, DollarSign, Star, AlertTriangle, Plus, ArrowLeft
 import { useApp } from "../../contexts/AppContext";
 import { useSellerProducts } from "./SellerLayout";
 import { formatPriceToman } from "../../data/products";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function SellerDashboard() {
   const { user, orders } = useApp();
@@ -144,7 +145,7 @@ export function SellerDashboard() {
                     <span className="text-xs text-slate-500">• {o.userName}</span>
                   </div>
                   <div className="text-xs text-slate-500">
-                    {new Date(o.createdAt).toLocaleDateString("fa-IR")}
+                    {formatPersianDate(o.createdAt)}
                   </div>
                 </div>
                 <div className="font-black text-cyan-700 text-sm">

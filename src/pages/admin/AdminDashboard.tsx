@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { formatPriceToman } from "../../data/products";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function AdminDashboard() {
   const { products, users, orders } = useApp();
@@ -220,7 +221,7 @@ export function AdminDashboard() {
                   </div>
                   <div className="text-xs text-slate-500">
                     {o.items.length.toLocaleString("fa-IR")} کالا •{" "}
-                    {new Date(o.createdAt).toLocaleDateString("fa-IR")}
+                    {formatPersianDate(o.createdAt)}
                   </div>
                 </div>
                 <div className="text-left">

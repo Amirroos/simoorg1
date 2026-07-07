@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useApp } from "../../contexts/AppContext";
 import { FileSearch, DollarSign, CheckCircle2, Clock, Send } from "lucide-react";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function SellerRFQs() {
   const { user, rfqs, products, addRFQBid } = useApp();
@@ -111,7 +112,7 @@ export function SellerRFQs() {
                   </div>
                   <div className="text-[10px] text-slate-400 mt-3 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    تاریخ نیاز: {rfq.neededBy}
+                    تاریخ نیاز: {formatPersianDate(rfq.neededBy)}
                   </div>
                 </motion.div>
               );

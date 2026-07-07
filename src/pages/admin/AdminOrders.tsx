@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Search, Eye, Package, Truck, CheckCircle2, Clock, X } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { formatPriceToman } from "../../data/products";
+import { formatPersianDate } from "../../utils/persianDate";
 
 export function AdminOrders() {
   const { orders, updateOrderStatus } = useApp();
@@ -127,7 +128,7 @@ export function AdminOrders() {
                       </div>
                       <div className="text-xs text-slate-500 mb-2">
                         {o.userName} ({o.userMobile}) • {o.items.length.toLocaleString("fa-IR")} کالا •{" "}
-                        {new Date(o.createdAt).toLocaleDateString("fa-IR")}
+                        {formatPersianDate(o.createdAt)}
                       </div>
                       <div className="flex items-center gap-2">
                         <button

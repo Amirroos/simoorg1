@@ -1,4 +1,4 @@
-import { Anchor, Phone, Mail, MapPin, Send, MessageCircle, Camera } from "lucide-react";
+import { Phone, Mail, MapPin, Send, MessageCircle, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
 import { productGroups } from "../data/products";
 
@@ -20,12 +20,12 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-700 flex items-center justify-center">
-                <Anchor className="w-5 h-5 text-white" />
+              <div className="w-12 h-12 rounded-full bg-white overflow-hidden ring-1 ring-white/30 shadow-lg shadow-cyan-500/20">
+                <img src="/media/mohr-logo.png" alt="لوگوی سامانه" className="w-full h-full rounded-full object-cover" />
               </div>
               <div>
                 <div className="text-white font-bold">سیمرغ تأمین دریا</div>
-                <div className="text-xs text-cyan-300">Simorgh Marine Supply</div>
+                <div className="text-xs text-cyan-300">بازارگاه تجهیزات و قطعات شناورها</div>
               </div>
             </div>
             <p className="text-sm leading-7 text-slate-400">

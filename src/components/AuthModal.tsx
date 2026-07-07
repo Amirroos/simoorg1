@@ -17,6 +17,11 @@ import {
   Phone,
 } from "lucide-react";
 import { useApp, type MaritimeProfile } from "../contexts/AppContext";
+import { PersianDateInput } from "./PersianDateInput";
+import { MultiSelect, SingleSelect } from "./SmartSelect";
+import { vesselTypes } from "../data/products";
+import { seafarerRanks } from "../data/maritime";
+import { isPersianDate } from "../utils/persianDate";
 
 interface AuthModalProps {
   open: boolean;
@@ -57,6 +62,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
   });
   const [certificates, setCertificates] = useState<string[]>([]);
   const [specialties, setSpecialties] = useState<string[]>([]);
+  const [selectedVesselTypes, setSelectedVesselTypes] = useState<string[]>([]);
   const [attachmentNames, setAttachmentNames] = useState<string[]>([]);
 
   const updateField = (field: keyof typeof form, value: string) => {
@@ -95,6 +101,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
     });
     setCertificates([]);
     setSpecialties([]);
+    setSelectedVesselTypes([]);
     setAttachmentNames([]);
   };
 
@@ -107,9 +114,11 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
     if (form.name.trim().length < 3) return "نام و نام خانوادگی باید حداقل ۳ کاراکتر باشد";
     if (!/^09\d{9}$/.test(form.mobile)) return "شماره موبایل باید ۱۱ رقم و با 09 شروع شود";
     if (form.nationalId && !/^\d{10}$/.test(form.nationalId)) return "کد ملی باید ۱۰ رقم باشد";
-    if (!form.rank.trim()) return "رتبه یا نقش دریانوردی را وارد کنید";
+    if (form.birthDate && !isPersianDate(form.birthDate)) return "تاریخ تولد را به‌صورت شمسی ۱۴۰۵/۰۴/۱۷ وارد کنید";
+    if (!form.rank.trim()) return "رتبه یا نقش دریانوردی را انتخاب کنید";
     if (!form.homePort.trim()) return "بندر فعالیت یا بندر مبدأ را وارد کنید";
-    if (!form.vesselType.trim()) return "نوع شناور را مشخص کنید";
+    if (selectedVesselTypes.length === 0) return "حداقل یک نوع شناور را انتخاب کنید";
+    if (form.licenseExpiresAt && !isPersianDate(form.licenseExpiresAt)) return "اعتبار گواهینامه را به‌صورت شمسی ۱۴۰۵/۰۴/۱۷ وارد کنید";
     if (form.emergencyMobile && !/^09\d{9}$/.test(form.emergencyMobile)) return "شماره تماس اضطراری معتبر نیست";
     return "";
   };
@@ -150,7 +159,8 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
     const maritimeProfile: MaritimeProfile = {
       rank: form.rank.trim(),
       seafarerCode: form.seafarerCode.trim(),
-      vesselType: form.vesselType.trim(),
+      vesselType: selectedVesselTypes.join("، "),
+      vesselTypes: selectedVesselTypes,
       vesselName: form.vesselName.trim(),
       vesselImo: form.vesselImo.trim(),
       homePort: form.homePort.trim(),
@@ -233,7 +243,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
                 <div className="hidden md:grid grid-cols-3 gap-3 text-white">
                   {[
                     { icon: Anchor, label: "رتبه", value: form.rank || "دریانورد" },
-                    { icon: Ship, label: "شناور", value: form.vesselType || "تجاری" },
+                    { icon: Ship, label: "شناور", value: selectedVesselTypes[0] || "تجاری" },
                     { icon: FileUp, label: "مدارک", value: `${attachmentNames.length.toLocaleString("fa-IR")} فایل` },
                   ].map((item) => {
                     const Icon = item.icon;
@@ -284,7 +294,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
                           <input value={form.nationalId} onChange={(e) => updateField("nationalId", e.target.value.replace(/\D/g, "").slice(0, 10))} dir="ltr" placeholder="0012345678" className="input-shell text-left" />
                         </Field>
                         <Field label="تاریخ تولد" icon={CalendarDays}>
-                          <input type="date" value={form.birthDate} onChange={(e) => updateField("birthDate", e.target.value)} className="input-shell text-left" />
+                          <PersianDateInput value={form.birthDate} onChange={(value) => updateField("birthDate", value)} />
                         </Field>
                         <Field label="ایمیل">
                           <input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} dir="ltr" placeholder="name@example.com" className="input-shell text-left" />
@@ -303,7 +313,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
                       <SectionTitle icon={Anchor} title="اطلاعات دریانوردی و شناور" />
                       <div className="grid md:grid-cols-3 gap-3">
                         <Field label="رتبه / نقش دریانوردی" icon={BadgeCheck} required>
-                          <input value={form.rank} onChange={(e) => updateField("rank", e.target.value)} placeholder="کاپیتان، افسر، مهندس..." className="input-shell" />
+                          <SingleSelect value={form.rank} onChange={(value) => updateField("rank", value)} options={seafarerRanks} />
                         </Field>
                         <Field label="کد دریانوردی">
                           <input value={form.seafarerCode} onChange={(e) => updateField("seafarerCode", e.target.value)} dir="ltr" placeholder="SEA-1024" className="input-shell text-left" />
@@ -312,7 +322,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
                           <input value={form.yearsExperience} onChange={(e) => updateField("yearsExperience", e.target.value)} placeholder="مثلاً ۸ سال" className="input-shell" />
                         </Field>
                         <Field label="نوع شناور" icon={Ship} required>
-                          <input value={form.vesselType} onChange={(e) => updateField("vesselType", e.target.value)} placeholder="لنج، یدک‌کش، نفتکش..." className="input-shell" />
+                          <MultiSelect values={selectedVesselTypes} onChange={setSelectedVesselTypes} options={vesselTypes} />
                         </Field>
                         <Field label="نام شناور">
                           <input value={form.vesselName} onChange={(e) => updateField("vesselName", e.target.value)} placeholder="نام شناور" className="input-shell" />
@@ -330,7 +340,7 @@ export function AuthModal({ open, onClose, onLoggedIn }: AuthModalProps) {
                           <input value={form.licenseNumber} onChange={(e) => updateField("licenseNumber", e.target.value)} dir="ltr" className="input-shell text-left" />
                         </Field>
                         <Field label="اعتبار گواهینامه" icon={CalendarDays}>
-                          <input type="date" value={form.licenseExpiresAt} onChange={(e) => updateField("licenseExpiresAt", e.target.value)} className="input-shell text-left" />
+                          <PersianDateInput value={form.licenseExpiresAt} onChange={(value) => updateField("licenseExpiresAt", value)} />
                         </Field>
                       </div>
 

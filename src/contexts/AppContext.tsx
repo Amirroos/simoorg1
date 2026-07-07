@@ -28,6 +28,7 @@ export interface MaritimeProfile {
   rank?: string;
   seafarerCode?: string;
   vesselType?: string;
+  vesselTypes?: string[];
   vesselName?: string;
   vesselImo?: string;
   homePort?: string;

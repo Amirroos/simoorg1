@@ -19,6 +19,11 @@ import {
   Waves,
 } from "lucide-react";
 import { useApp, type MaritimeProfile } from "../contexts/AppContext";
+import { PersianDateInput } from "../components/PersianDateInput";
+import { MultiSelect, SingleSelect } from "../components/SmartSelect";
+import { vesselTypes } from "../data/products";
+import { seafarerRanks } from "../data/maritime";
+import { formatPersianDate } from "../utils/persianDate";
 
 const certificateOptions = ["STCW", "Basic Safety", "Watchkeeping", "GMDSS", "Medical First Aid", "Tanker Familiarization"];
 const specialtyOptions = ["موتورخانه", "عرشه", "برق و الکترونیک", "ناوبری", "ایمنی", "تدارکات شناور"];
@@ -51,6 +56,9 @@ export function Profile() {
   });
   const [certificates, setCertificates] = useState<string[]>(maritime.certificates || []);
   const [specialties, setSpecialties] = useState<string[]>(maritime.specialties || []);
+  const [selectedVesselTypes, setSelectedVesselTypes] = useState<string[]>(
+    maritime.vesselTypes || (maritime.vesselType ? maritime.vesselType.split("، ").filter(Boolean) : [])
+  );
   const [attachmentNames, setAttachmentNames] = useState<string[]>(maritime.attachmentNames || []);
 
   const userOrders = user ? orders.filter((order) => order.userId === user.id) : [];
@@ -63,7 +71,7 @@ export function Profile() {
       form.nationalId,
       form.city,
       form.rank,
-      form.vesselType,
+      selectedVesselTypes.length ? "vessels" : "",
       form.homePort,
       form.licenseNumber,
       certificates.length ? "certs" : "",
@@ -71,7 +79,7 @@ export function Profile() {
       attachmentNames.length ? "files" : "",
     ];
     return Math.round((values.filter(Boolean).length / values.length) * 100);
-  }, [attachmentNames.length, certificates.length, form, specialties.length]);
+  }, [attachmentNames.length, certificates.length, form, selectedVesselTypes.length, specialties.length]);
 
   if (!user) {
     return (
@@ -102,7 +110,8 @@ export function Profile() {
     const maritimeProfile: MaritimeProfile = {
       rank: form.rank.trim(),
       seafarerCode: form.seafarerCode.trim(),
-      vesselType: form.vesselType.trim(),
+      vesselType: selectedVesselTypes.join("، "),
+      vesselTypes: selectedVesselTypes,
       vesselName: form.vesselName.trim(),
       vesselImo: form.vesselImo.trim(),
       homePort: form.homePort.trim(),
@@ -146,7 +155,7 @@ export function Profile() {
                 کارت هویتی، سوابق دریانوردی، گواهینامه‌ها و فایل‌های مدرک شما اینجا نگهداری می‌شود و در پنل مدیریت قابل بررسی است.
               </p>
               <div className="mt-6 grid sm:grid-cols-3 gap-3">
-                <Stat icon={Ship} label="نوع شناور" value={maritime.vesselType || "ثبت نشده"} />
+                <Stat icon={Ship} label="نوع شناور" value={maritime.vesselTypes?.join("، ") || maritime.vesselType || "ثبت نشده"} />
                 <Stat icon={Anchor} label="رتبه دریانوردی" value={maritime.rank || "ثبت نشده"} />
                 <Stat icon={MapPin} label="بندر فعالیت" value={maritime.homePort || "ثبت نشده"} />
               </div>
@@ -193,7 +202,7 @@ export function Profile() {
                   <input value={form.email} onChange={(e) => updateField("email", e.target.value)} dir="ltr" className="input-shell text-left" />
                 </Field>
                 <Field label="تاریخ تولد">
-                  <input type="date" value={form.birthDate} onChange={(e) => updateField("birthDate", e.target.value)} className="input-shell text-left" />
+                  <PersianDateInput value={form.birthDate} onChange={(value) => updateField("birthDate", value)} />
                 </Field>
                 <Field label="شهر">
                   <input value={form.city} onChange={(e) => updateField("city", e.target.value)} className="input-shell" />
@@ -207,7 +216,7 @@ export function Profile() {
             <Panel title="اطلاعات دریانوردی" icon={Anchor}>
               <div className="grid md:grid-cols-3 gap-3">
                 <Field label="رتبه / نقش">
-                  <input value={form.rank} onChange={(e) => updateField("rank", e.target.value)} className="input-shell" />
+                  <SingleSelect value={form.rank} onChange={(value) => updateField("rank", value)} options={seafarerRanks} />
                 </Field>
                 <Field label="کد دریانوردی">
                   <input value={form.seafarerCode} onChange={(e) => updateField("seafarerCode", e.target.value)} dir="ltr" className="input-shell text-left" />
@@ -216,7 +225,7 @@ export function Profile() {
                   <input value={form.yearsExperience} onChange={(e) => updateField("yearsExperience", e.target.value)} className="input-shell" />
                 </Field>
                 <Field label="نوع شناور">
-                  <input value={form.vesselType} onChange={(e) => updateField("vesselType", e.target.value)} className="input-shell" />
+                  <MultiSelect values={selectedVesselTypes} onChange={setSelectedVesselTypes} options={vesselTypes} />
                 </Field>
                 <Field label="نام شناور">
                   <input value={form.vesselName} onChange={(e) => updateField("vesselName", e.target.value)} className="input-shell" />
@@ -234,7 +243,7 @@ export function Profile() {
                   <input value={form.licenseNumber} onChange={(e) => updateField("licenseNumber", e.target.value)} dir="ltr" className="input-shell text-left" />
                 </Field>
                 <Field label="اعتبار گواهینامه">
-                  <input type="date" value={form.licenseExpiresAt} onChange={(e) => updateField("licenseExpiresAt", e.target.value)} className="input-shell text-left" />
+                  <PersianDateInput value={form.licenseExpiresAt} onChange={(value) => updateField("licenseExpiresAt", value)} />
                 </Field>
               </div>
             </Panel>
@@ -282,8 +291,8 @@ export function Profile() {
                 <InfoLine label="رتبه" value={form.rank || "ثبت نشده"} />
                 <InfoLine label="کد دریانوردی" value={form.seafarerCode || "ثبت نشده"} ltr />
                 <InfoLine label="بندر" value={form.homePort || "ثبت نشده"} />
-                <InfoLine label="شناور" value={form.vesselName || form.vesselType || "ثبت نشده"} />
-                <InfoLine label="اعتبار گواهینامه" value={form.licenseExpiresAt ? new Date(form.licenseExpiresAt).toLocaleDateString("fa-IR") : "ثبت نشده"} />
+                <InfoLine label="شناور" value={form.vesselName || selectedVesselTypes.join("، ") || "ثبت نشده"} />
+                <InfoLine label="اعتبار گواهینامه" value={formatPersianDate(form.licenseExpiresAt)} />
               </div>
             </Panel>
 

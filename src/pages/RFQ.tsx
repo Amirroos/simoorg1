@@ -4,6 +4,8 @@ import { FileSearch, CheckCircle2, Plus, X, Upload, Sparkles, Clock, Users, Targ
 import { Link, useSearchParams } from "react-router-dom";
 import { getCategoryIdForProductGroup, getDetailedSubcategoriesForProductGroup, productGroups, vesselTypes } from "../data/products";
 import { useApp } from "../contexts/AppContext";
+import { PersianDateInput } from "../components/PersianDateInput";
+import { isPersianDate } from "../utils/persianDate";
 
 interface RFQItem {
   id: string;
@@ -80,6 +82,7 @@ export function RFQ() {
     if (!productGroupId) return "گروه محصول را انتخاب کنید.";
     if (!vesselType) return "نوع شناور را انتخاب کنید.";
     if (!neededBy) return "تاریخ نیاز را انتخاب کنید.";
+    if (!isPersianDate(neededBy)) return "تاریخ نیاز را به‌صورت شمسی ۱۴۰۵/۰۴/۱۷ وارد کنید.";
     if (deliveryLocation.trim().length < 3) return "محل تحویل را وارد کنید.";
     if (description.trim().length < 5) return "توضیح کوتاهی درباره نیاز خود بنویسید.";
     if (items.some((i) => i.name.trim().length < 2)) return "نام همه اقلام درخواستی را وارد کنید.";
@@ -349,11 +352,10 @@ export function RFQ() {
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                       تاریخ نیاز <span className="text-rose-500">*</span>
                     </label>
-                    <input
-                      type="date"
+                    <PersianDateInput
                       value={neededBy}
-                      onChange={(e) => setNeededBy(e.target.value)}
-                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={setNeededBy}
+                      required
                       className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
                     />
                   </div>

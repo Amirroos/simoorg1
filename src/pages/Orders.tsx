@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Package, Clock, CheckCircle2, Truck, ShoppingBag, X } from "lucide-react";
 import { useApp } from "../contexts/AppContext";
 import { formatPriceToman } from "../data/products";
+import { formatPersianDate } from "../utils/persianDate";
 
 export function Orders() {
   const { user, orders } = useApp();
@@ -103,7 +104,7 @@ export function Orders() {
                       </span>
                     </div>
                     <div className="text-xs text-slate-500">
-                      {new Date(order.createdAt).toLocaleDateString("fa-IR")}
+                      {formatPersianDate(order.createdAt)}
                     </div>
                   </div>
                   <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold ${colorClasses[status.color]}`}>
