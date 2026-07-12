@@ -22,6 +22,8 @@ import { useApp } from "../contexts/AppContext";
 import { ProductCard } from "../components/ProductCard";
 import { formatPersianDate } from "../utils/persianDate";
 
+const PUBLIC_SUPPLIER_NAME = "سیمرغ تامین دریا";
+
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const { products, addToCart, user, addReview, reviews, favorites, toggleFavorite } = useApp();
@@ -32,13 +34,13 @@ export function ProductDetail() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [stockError, setStockError] = useState("");
 
-  const product = products.find((p) => p.id === id);
+  const product = products.find((p) => p.id === id && p.status === "published");
   const productGroup = product ? productGroups.find((group) => group.id === product.productGroupId) : null;
   const subcategory = product ? detailedSubcategories.find((item) => item.id === product.subcategoryId) : null;
   const productReviews = reviews.filter((r) => r.productId === id);
   const relatedProducts = product
     ? products
-        .filter((p) => p.productGroupId === product.productGroupId && p.id !== product.id)
+        .filter((p) => p.status === "published" && p.productGroupId === product.productGroupId && p.id !== product.id)
         .slice(0, 4)
     : [];
   const isFavorite = product ? favorites.includes(product.id) : false;
@@ -234,7 +236,7 @@ export function ProductDetail() {
                   { id: "desc", label: "توضیحات" },
                   { id: "specs", label: "مشخصات فنی" },
                   { id: "reviews", label: `نظرات (${productReviews.length})` },
-                  { id: "seller", label: "درباره فروشنده" },
+                  { id: "seller", label: "ضمانت و تامین" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -397,15 +399,15 @@ export function ProductDetail() {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-white font-black text-2xl flex-shrink-0 shadow-lg">
-                        {product.sellerName.charAt(0)}
+                        {PUBLIC_SUPPLIER_NAME.charAt(0)}
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg text-slate-800 mb-1">{product.sellerName}</h3>
+                        <h3 className="font-bold text-lg text-slate-800 mb-1">{PUBLIC_SUPPLIER_NAME}</h3>
                         <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
                           <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                           <span className="font-bold">{product.sellerScore.toLocaleString("fa-IR")}</span>
                           <span>•</span>
-                          <span className="text-emerald-600 font-semibold">فروشنده تأیید شده</span>
+                          <span className="text-emerald-600 font-semibold">تامین و قیمت‌گذاری تایید شده</span>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
                           <div className="flex items-center gap-1">
@@ -428,7 +430,7 @@ export function ProductDetail() {
                       </div>
                     </div>
                     <div className="mt-4 p-4 rounded-2xl border border-slate-100">
-                      <h4 className="font-bold mb-3">تعهدات فروشنده</h4>
+                      <h4 className="font-bold mb-3">تعهدات سیمرغ</h4>
                       <ul className="space-y-2 text-sm text-slate-700">
                         <li className="flex items-start gap-2">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
@@ -470,7 +472,7 @@ export function ProductDetail() {
                       قیمت استعلامی
                     </div>
                     <div className="text-sm text-slate-700">
-                      برای دریافت قیمت، درخواست RFQ ثبت کنید یا با فروشنده تماس بگیرید.
+                      برای انتخاب دقیق‌تر، با دریا یار گفت‌وگو کنید تا مشخصات مورد نیاز را بررسی کند.
                     </div>
                   </div>
                 )}
@@ -545,7 +547,7 @@ export function ProductDetail() {
                     to={product.hasPrice ? "/rfq" : `/rfq?productId=${product.id}`}
                     className="w-full py-4 rounded-xl font-bold text-white bg-gradient-to-l from-cyan-600 to-blue-700 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition flex items-center justify-center gap-2"
                   >
-                    ثبت درخواست استعلام
+                    گفت‌وگو با دریا یار
                   </Link>
                 )}
 
@@ -566,10 +568,10 @@ export function ProductDetail() {
               <div className="bg-white rounded-2xl p-5 border border-slate-100">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center text-white font-black shadow-lg">
-                    {product.sellerName.charAt(0)}
+                    {PUBLIC_SUPPLIER_NAME.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-sm text-slate-800">{product.sellerName}</div>
+                    <div className="font-bold text-sm text-slate-800">{PUBLIC_SUPPLIER_NAME}</div>
                     <div className="flex items-center gap-1 text-xs">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                       <span className="font-bold">{product.sellerScore.toLocaleString("fa-IR")}</span>
@@ -582,7 +584,7 @@ export function ProductDetail() {
                     مشاهده فروشگاه
                   </button>
                   <button className="px-3 py-2 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-semibold transition">
-                    تماس با فروشنده
+                    تماس با سیمرغ
                   </button>
                 </div>
               </div>

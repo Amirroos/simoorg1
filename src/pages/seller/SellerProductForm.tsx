@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Save,
@@ -41,10 +41,14 @@ const PLACEHOLDER_IMG = marineImage("محصول دریایی جدید", "default
 export function SellerProductForm() {
   const { id } = useParams();
   const isEdit = !!id;
+  const [searchParams] = useSearchParams();
+  const requestId = searchParams.get("requestId") || "";
   const navigate = useNavigate();
-  const { user, products, addProduct, updateProduct } = useApp();
+  const { user, products, adminProductRequests, addProduct, updateProduct } = useApp();
 
   const existing = isEdit ? products.find((p) => p.id === id) : null;
+  const adminRequest = requestId ? adminProductRequests.find((request) => request.id === requestId) : null;
+  const isLockedPendingEdit = !!existing && existing.status === "pending";
 
   const [form, setForm] = useState({
     name: "",
@@ -96,8 +100,27 @@ export function SellerProductForm() {
           ? Object.entries(existing.specs).map(([k, v]) => ({ key: k, value: v }))
           : [{ key: "", value: "" }]
       );
+    } else if (adminRequest) {
+      setForm((prev) => ({
+        ...prev,
+        name: adminRequest.title,
+        categoryId: getCategoryIdForProductGroup(adminRequest.productGroupId),
+        productGroupId: adminRequest.productGroupId,
+        subcategoryId: adminRequest.subcategoryId || "",
+        brand: adminRequest.brand || "",
+        model: adminRequest.model || "",
+        country: adminRequest.country || prev.country,
+        hasPrice: adminRequest.hasPrice,
+        image: adminRequest.image || prev.image,
+        vesselTypes: adminRequest.vesselTypes || [],
+        condition: adminRequest.condition || prev.condition,
+        shortDesc: adminRequest.shortDesc || adminRequest.description,
+        description: adminRequest.description,
+        leadTime: adminRequest.leadTime || prev.leadTime,
+        tags: adminRequest.tags || [],
+      }));
     }
-  }, [existing]);
+  }, [existing, adminRequest]);
 
   const currentSubcategories = form.productGroupId
     ? getDetailedSubcategoriesForProductGroup(form.productGroupId)
@@ -132,6 +155,9 @@ export function SellerProductForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (isLockedPendingEdit) {
+      return setError("این محصول در انتظار تایید ادمین است و تا تعیین وضعیت، قابل ویرایش نیست.");
+    }
 
     if (form.name.length < 5) return setError("نام محصول باید حداقل ۵ کاراکتر باشد");
     if (!form.productGroupId) return setError("گروه محصول را انتخاب کنید");
@@ -174,7 +200,11 @@ export function SellerProductForm() {
         sellerId: user!.id,
         sellerName: user!.companyName || user!.name,
         sellerScore: user!.rating || 5,
-        status: "published",
+        status: "pending",
+        workflowType: adminRequest ? "admin_request_offer" : "supplier_offer",
+        adminRequestId: adminRequest?.id,
+        supplierBasePrice: form.hasPrice ? form.price : 0,
+        submittedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       });
     }
@@ -203,6 +233,26 @@ export function SellerProductForm() {
     );
   }
 
+  if (isLockedPendingEdit) {
+    return (
+      <div className="max-w-xl mx-auto bg-white rounded-3xl p-8 text-center shadow-xl border border-amber-100">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+          <AlertCircle className="w-9 h-9 text-amber-600" />
+        </div>
+        <h2 className="text-xl font-black text-slate-900 mb-2">محصول در انتظار تایید ادمین است</h2>
+        <p className="text-sm text-slate-600 leading-7 mb-5">
+          بعد از ارسال برای بررسی ادمین، فروشنده امکان ویرایش اطلاعات محصول را ندارد.
+        </p>
+        <Link
+          to="/seller/products"
+          className="inline-flex px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition"
+        >
+          بازگشت به محصولات
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
@@ -224,6 +274,14 @@ export function SellerProductForm() {
 
       <form onSubmit={handleSubmit} className="grid lg:grid-cols-[1fr_320px] gap-4">
         <div className="space-y-4">
+          {adminRequest && (
+            <div className="bg-cyan-50 rounded-2xl p-5 border border-cyan-100">
+              <div className="text-sm font-bold text-cyan-800 mb-1">در پاسخ به درخواست ادمین</div>
+              <div className="font-black text-slate-900">{adminRequest.title}</div>
+              <p className="text-sm text-slate-600 mt-2 leading-7">{adminRequest.description}</p>
+            </div>
+          )}
+
           {/* اطلاعات پایه */}
           <div className="bg-white rounded-2xl p-5 border border-slate-100">
             <h3 className="font-bold mb-4 flex items-center gap-2">

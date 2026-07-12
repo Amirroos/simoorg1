@@ -1,524 +1,327 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FileSearch, CheckCircle2, Plus, X, Upload, Sparkles, Clock, Users, Target, ArrowLeft } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
-import { getCategoryIdForProductGroup, getDetailedSubcategoriesForProductGroup, productGroups, vesselTypes } from "../data/products";
+import { Anchor, Bot, Loader2, PackageSearch, RefreshCcw, Send, Sparkles, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useApp } from "../contexts/AppContext";
-import { PersianDateInput } from "../components/PersianDateInput";
-import { isPersianDate } from "../utils/persianDate";
+import { formatPriceToman, productGroups, type Product } from "../data/products";
 
-interface RFQItem {
-  id: string;
-  name: string;
-  qty: number;
-  unit: string;
-  specs: string;
+type ChatMessage = {
+  role: "assistant" | "user";
+  content: string;
+  suggestedProductId?: string;
+  suggestedProductName?: string;
+};
+
+const STARTER_MESSAGES: ChatMessage[] = [
+  {
+    role: "assistant",
+    content:
+      "سلام، من دریا یار هستم. نیاز فنی یا مشکل شناورتان را ساده بگویید. اول چند مشخصه مثل برند، مدل، نوع شناور و وضعیت کالا را می‌پرسم و بعد فقط اگر تطبیق کافی باشد محصول پیشنهاد می‌دهم.",
+  },
+];
+
+const QUICK_PROMPTS = [
+  "برای سیستم خنک‌کننده موتور دنبال پمپ مناسب هستم",
+  "قطعه برق دریایی برای شناور باری نیاز دارم",
+  "موتور کشتی خراب شده و قطعه جایگزین می‌خواهم",
+];
+
+function getDaryaYarEndpoint() {
+  const configuredUrl = import.meta.env.VITE_DARYA_YAR_API_URL?.trim();
+  if (configuredUrl) return configuredUrl;
+
+  if (typeof window !== "undefined" && window.location.port === "3000") {
+    return "http://127.0.0.1:5173/api/darya-yar";
+  }
+
+  return "/api/darya-yar";
 }
 
 export function RFQ() {
-  const { user, addRFQ, products } = useApp();
-  const [params] = useSearchParams();
-  const productId = params.get("productId") || "";
-  const inquiryProduct = products.find((p) => p.id === productId && !p.hasPrice) || null;
-  const requestType = inquiryProduct ? "product_price" : "missing_product";
-  const [submitted, setSubmitted] = useState(false);
-  const [submittedId, setSubmittedId] = useState("");
+  const { products } = useApp();
+  const [messages, setMessages] = useState<ChatMessage[]>(STARTER_MESSAGES);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [title, setTitle] = useState(inquiryProduct ? `استعلام قیمت ${inquiryProduct.name}` : "");
-  const [categoryId, setCategoryId] = useState(inquiryProduct?.categoryId || "");
-  const [productGroupId, setProductGroupId] = useState(inquiryProduct?.productGroupId || "");
-  const [subcategoryId, setSubcategoryId] = useState(inquiryProduct?.subcategoryId || "");
-  const [vesselType, setVesselType] = useState("");
-  const [urgency, setUrgency] = useState("normal");
-  const [neededBy, setNeededBy] = useState("");
-  const [deliveryLocation, setDeliveryLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [items, setItems] = useState<RFQItem[]>([
-    {
-      id: "1",
-      name: inquiryProduct?.name || "",
-      qty: 1,
-      unit: "عدد",
-      specs: inquiryProduct ? `${inquiryProduct.brand} ${inquiryProduct.model}`.trim() : "",
-    },
-  ]);
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  const publishedProducts = useMemo(
+    () => products.filter((product) => product.status === "published"),
+    [products]
+  );
+
+  const productCatalog = useMemo(() => {
+    return publishedProducts.map((product) => ({
+      id: product.id,
+      name: product.name,
+      brand: product.brand,
+      model: product.model,
+      country: product.country,
+      group: productGroups.find((group) => group.id === product.productGroupId)?.name || product.productGroupId,
+      productGroupId: product.productGroupId,
+      subcategoryId: product.subcategoryId,
+      hasPrice: product.hasPrice,
+      price: product.hasPrice ? product.price : null,
+      priceText: product.hasPrice ? formatPriceToman(product.price) : "استعلامی",
+      stock: product.stock,
+      vesselTypes: product.vesselTypes,
+      condition: product.condition,
+      conditionText: conditionLabel(product.condition),
+      shortDesc: product.shortDesc,
+      description: product.description.slice(0, 280),
+      specs: product.specs,
+      tags: product.tags || [],
+      leadTime: product.leadTime,
+    }));
+  }, [publishedProducts]);
+
+  const selectedProduct = useMemo(
+    () => publishedProducts.find((product) => product.id === selectedProductId) || null,
+    [publishedProducts, selectedProductId]
+  );
 
   useEffect(() => {
-    if (!inquiryProduct) return;
-    setTitle(`استعلام قیمت ${inquiryProduct.name}`);
-    setCategoryId(inquiryProduct.categoryId);
-    setProductGroupId(inquiryProduct.productGroupId || "");
-    setSubcategoryId(inquiryProduct.subcategoryId || "");
-    setItems([
-      {
-        id: "1",
-        name: inquiryProduct.name,
-        qty: 1,
-        unit: "عدد",
-        specs: `${inquiryProduct.brand} ${inquiryProduct.model}`.trim(),
-      },
-    ]);
-  }, [inquiryProduct]);
+    const scrollBox = chatScrollRef.current;
+    if (!scrollBox) return;
+    scrollBox.scrollTo({ top: scrollBox.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
 
-  const addItem = () => {
-    setItems([...items, { id: Date.now().toString(), name: "", qty: 1, unit: "عدد", specs: "" }]);
-  };
+  const sendMessage = async (text = input) => {
+    const content = text.trim();
+    if (!content || loading) return;
 
-  const currentSubcategories = productGroupId
-    ? getDetailedSubcategoriesForProductGroup(productGroupId)
-    : [];
-  const removeItem = (id: string) => {
-    if (items.length === 1) return;
-    setItems(items.filter((i) => i.id !== id));
-  };
-  const updateItem = (id: string, field: keyof RFQItem, value: any) => {
-    setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
-  };
+    const nextMessages: ChatMessage[] = [...messages, { role: "user", content }];
+    setMessages(nextMessages);
+    setInput("");
+    setError("");
+    setLoading(true);
 
-  const validate = () => {
-    if (!user) return "برای ثبت درخواست ابتدا وارد حساب کاربری شوید.";
-    if (user.role !== "buyer") return "ثبت درخواست فقط با حساب خریدار امکان‌پذیر است.";
-    if (title.trim().length < 5) return "عنوان درخواست را کامل‌تر وارد کنید.";
-    if (!productGroupId) return "گروه محصول را انتخاب کنید.";
-    if (!vesselType) return "نوع شناور را انتخاب کنید.";
-    if (!neededBy) return "تاریخ نیاز را انتخاب کنید.";
-    if (!isPersianDate(neededBy)) return "تاریخ نیاز را به‌صورت شمسی ۱۴۰۵/۰۴/۱۷ وارد کنید.";
-    if (deliveryLocation.trim().length < 3) return "محل تحویل را وارد کنید.";
-    if (description.trim().length < 5) return "توضیح کوتاهی درباره نیاز خود بنویسید.";
-    if (items.some((i) => i.name.trim().length < 2)) return "نام همه اقلام درخواستی را وارد کنید.";
-    if (items.some((i) => i.qty < 1)) return "تعداد اقلام باید حداقل یک باشد.";
-    return "";
-  };
+    try {
+      const response = await fetch(getDaryaYarEndpoint(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: nextMessages,
+          products: productCatalog,
+        }),
+      });
 
-  const canSubmit = Boolean(user && user.role === "buyer");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || "ارتباط با دریا یار برقرار نشد.");
+      }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
+      const assistantMessage: ChatMessage = {
+        role: "assistant",
+        content: data.reply || "پاسخی دریافت نشد. لطفا دوباره تلاش کنید.",
+        suggestedProductId: data.suggestedProductId,
+        suggestedProductName: data.suggestedProductName,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      if (data.suggestedProductId) {
+        setSelectedProductId(data.suggestedProductId);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "خطای نامشخص در ارتباط با دریا یار.");
+    } finally {
+      setLoading(false);
     }
-    const newRfq = addRFQ({
-      requestType,
-      productId: inquiryProduct?.id,
-      productName: inquiryProduct?.name,
-      productSellerId: inquiryProduct?.sellerId,
-      productSellerName: inquiryProduct?.sellerName,
-      title: title.trim(),
-      categoryId: categoryId || getCategoryIdForProductGroup(productGroupId),
-      productGroupId,
-      subcategoryId,
-      vesselType,
-      urgency,
-      neededBy,
-      deliveryLocation: deliveryLocation.trim(),
-      description: description.trim(),
-      items: items.map((item) => ({
-        ...item,
-        name: item.name.trim(),
-        specs: item.specs.trim(),
-      })),
-    });
-    if (!newRfq) {
-      setError("درخواست ثبت نشد. لطفا با حساب خریدار وارد شوید و دوباره تلاش کنید.");
-      return;
-    }
-    setSubmittedId(newRfq.id);
-    setSubmitted(true);
   };
 
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="max-w-lg w-full bg-white rounded-3xl p-8 text-center shadow-xl"
-        >
-          <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-cyan-100 to-blue-100 flex items-center justify-center">
-            <CheckCircle2 className="w-12 h-12 text-cyan-600" />
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 mb-2">
-            درخواست استعلام شما ثبت شد!
-          </h2>
-          <p className="text-slate-600 mb-6">
-            شماره RFQ: <span dir="ltr" className="font-bold text-cyan-700">{submittedId}</span>
-          </p>
-          <div className="space-y-3 text-right mb-6">
-            {[
-              { icon: Users, text: requestType === "product_price" ? "درخواست قیمت برای تامین‌کننده همین کالا ارسال شد" : "درخواست شما برای همه تامین‌کنندگان فعال ارسال شد" },
-              { icon: Clock, text: "قیمت‌ها تا ۷ روز برای شما پنهان می‌مانند مگر اینکه ادمین زودتر منتشر کند" },
-              { icon: Target, text: "بعد از انتشار، پایین‌ترین پیشنهاد برای شما برجسته می‌شود" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-sky-50 border border-sky-100">
-                <item.icon className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-slate-700">{item.text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Link
-              to="/my-rfqs"
-              className="flex-1 py-3 rounded-xl bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
-            >
-              پیگیری درخواست
-            </Link>
-            <Link
-              to="/"
-              className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
-            >
-              بازگشت به خانه
-            </Link>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+  const resetChat = () => {
+    setMessages(STARTER_MESSAGES);
+    setInput("");
+    setError("");
+    setSelectedProductId("");
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-gradient-to-bl from-slate-900 via-blue-900 to-cyan-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-cyan-200 text-xs font-semibold mb-3">
-              <FileSearch className="w-4 h-4" />
-              سیستم استعلام قیمت
+      <div className="bg-gradient-to-bl from-slate-950 via-cyan-950 to-blue-950 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-200 text-xs font-bold mb-3">
+              <Sparkles className="w-4 h-4" />
+              راهنمای هوشمند انتخاب قطعات دریایی
             </div>
-            <h1 className="text-3xl md:text-4xl font-black mb-3">
-              درخواست استعلام (RFQ)
-            </h1>
+            <h1 className="text-3xl md:text-5xl font-black mb-3">دریا یار</h1>
             <p className="text-slate-300 leading-7 max-w-2xl">
-              قطعه نایاب یا تخصصی نیاز دارید؟ درخواست خود را ثبت کنید تا فروشندگان مرتبط
-              بهترین پیشنهادها را برای شما ارسال کنند.
+              نیازتان را بگویید؛ دریا یار قبل از پیشنهاد محصول، مشخصات مهم مثل برند، مدل، نوع شناور، وضعیت کالا و مشخصات فنی را مرحله‌به‌مرحله کامل می‌کند.
             </p>
           </motion.div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        {!user ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm"
-          >
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
-              <Users className="w-8 h-8 text-amber-600" />
-            </div>
-            <h3 className="text-xl font-bold mb-2">ابتدا وارد حساب کاربری شوید</h3>
-            <p className="text-slate-600 mb-5">
-              برای ثبت درخواست استعلام، باید در بازارگاه ثبت‌نام کنید
-            </p>
-            <button
-              onClick={() => {
-                const event = new CustomEvent("openAuthModal");
-                window.dispatchEvent(event);
-              }}
-              className="px-6 py-3 rounded-xl bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
-            >
-              ورود / ثبت‌نام
-            </button>
-          </motion.div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {inquiryProduct ? (
-              <div className="bg-cyan-50 border border-cyan-100 rounded-2xl p-4 flex items-start gap-3">
-                <FileSearch className="w-5 h-5 text-cyan-700 mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-bold text-cyan-900 mb-1">استعلام قیمت کالای موجود در سامانه</div>
-                  <p className="text-sm text-cyan-800 leading-7">
-                    این درخواست برای کالای «{inquiryProduct.name}» ثبت می‌شود و با درخواست تامین کالای خارج از فهرست جداگانه مدیریت خواهد شد.
-                  </p>
-                </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid lg:grid-cols-[1fr_340px] gap-5">
+        <section className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-[720px] max-h-[calc(100vh-150px)] min-h-[560px] flex flex-col">
+          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center">
+                <Bot className="w-6 h-6" />
               </div>
-            ) : (
-              <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-start gap-3">
-                <FileSearch className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="font-bold text-amber-900 mb-1">درخواست تامین کالای خارج از فهرست</div>
-                  <p className="text-sm text-amber-800 leading-7">
-                    اگر کالا در سامانه پیدا نشده، مشخصات آن را ثبت کنید تا همه تامین‌کنندگان بتوانند پیشنهاد تامین بدهند.
-                  </p>
-                </div>
+              <div>
+                <h2 className="font-black text-slate-900">چت با دریا یار</h2>
+              </div>
+            </div>
+            <button
+              onClick={resetChat}
+              className="w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition"
+              title="شروع دوباره"
+              type="button"
+            >
+              <RefreshCcw className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div ref={chatScrollRef} className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4 bg-slate-50 overscroll-contain">
+            {messages.map((message, index) => (
+              <ChatBubble key={`${message.role}-${index}`} message={message} />
+            ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Loader2 className="w-4 h-4 animate-spin text-cyan-700" />
+                دریا یار در حال بررسی مشخصات و مقایسه محصولات است...
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 border-t border-slate-200 bg-white">
+            {messages.length === 1 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {QUICK_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    className="px-3 py-1.5 rounded-full bg-cyan-50 hover:bg-cyan-100 text-cyan-800 text-xs font-bold transition"
+                  >
+                    {prompt}
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Main info */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl p-6 border border-slate-100"
-            >
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-cyan-600" />
-                اطلاعات درخواست
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    عنوان درخواست <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="مثلاً: پمپ آب خنک‌کننده موتور دیزل ۲ عدد"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      گروه محصول <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={productGroupId}
-                      onChange={(e) => {
-                        const nextProductGroupId = e.target.value;
-                        setProductGroupId(nextProductGroupId);
-                        setCategoryId(nextProductGroupId ? getCategoryIdForProductGroup(nextProductGroupId) : "");
-                        setSubcategoryId("");
-                      }}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
-                    >
-                      <option value="">انتخاب کنید</option>
-                      {productGroups.map((group) => (
-                        <option key={group.id} value={group.id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      زیرگروه تخصصی
-                    </label>
-                    <select
-                      value={subcategoryId}
-                      onChange={(e) => setSubcategoryId(e.target.value)}
-                      disabled={!productGroupId || currentSubcategories.length === 0}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none disabled:opacity-50"
-                    >
-                      <option value="">انتخاب کنید</option>
-                      {currentSubcategories.map((subcategory) => (
-                        <option key={subcategory.id} value={subcategory.id}>
-                          {subcategory.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      نوع شناور <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={vesselType}
-                      onChange={(e) => setVesselType(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
-                    >
-                      <option value="">انتخاب کنید</option>
-                      {vesselTypes.map((v) => (
-                        <option key={v} value={v}>
-                          ⚓ {v}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      فوریت
-                    </label>
-                    <select
-                      value={urgency}
-                      onChange={(e) => setUrgency(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
-                    >
-                      <option value="normal">عادی (تا یک هفته)</option>
-                      <option value="urgent">فوری (تا ۳ روز)</option>
-                      <option value="critical">بحرانی (کمتر از ۴۸ ساعت)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      تاریخ نیاز <span className="text-rose-500">*</span>
-                    </label>
-                    <PersianDateInput
-                      value={neededBy}
-                      onChange={setNeededBy}
-                      required
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    محل تحویل <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={deliveryLocation}
-                    onChange={(e) => setDeliveryLocation(e.target.value)}
-                    placeholder="استان، شهر، اسکله یا بندر"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    توضیحات فنی <span className="text-rose-500">*</span>
-                  </label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    placeholder="جزئیات فنی، برند مورد نظر، کاربرد، شرایط محیطی و..."
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none resize-none"
-                  />
-                  <div className="text-xs text-slate-500 mt-1 text-left">
-                    {description.length}/5 حداقل کاراکتر
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Items */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-6 border border-slate-100"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg flex items-center gap-2">
-                  <Target className="w-5 h-5 text-cyan-600" />
-                  اقلام درخواست
-                </h3>
-                <button
-                  type="button"
-                  onClick={addItem}
-                  className="flex items-center gap-1 text-sm font-semibold text-cyan-700 hover:text-cyan-800"
-                >
-                  <Plus className="w-4 h-4" />
-                  افزودن قلم
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {items.map((item, idx) => (
-                  <div key={item.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-slate-600">قلم {idx + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id)}
-                        disabled={items.length === 1}
-                        className="w-7 h-7 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center disabled:opacity-30 transition"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="grid md:grid-cols-[1fr_100px_120px] gap-3">
-                      <input
-                        type="text"
-                        value={item.name}
-                        onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                        placeholder="نام کالا"
-                        className="px-3 py-2 rounded-lg border border-slate-200 focus:border-cyan-500 outline-none text-sm"
-                      />
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.qty}
-                        onChange={(e) => updateItem(item.id, "qty", parseInt(e.target.value) || 1)}
-                        placeholder="تعداد"
-                        className="px-3 py-2 rounded-lg border border-slate-200 focus:border-cyan-500 outline-none text-sm"
-                      />
-                      <select
-                        value={item.unit}
-                        onChange={(e) => updateItem(item.id, "unit", e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-slate-200 focus:border-cyan-500 outline-none text-sm"
-                      >
-                        <option>عدد</option>
-                        <option>ست</option>
-                        <option>کیلوگرم</option>
-                        <option>متر</option>
-                        <option>بسته</option>
-                      </select>
-                    </div>
-                    <textarea
-                      value={item.specs}
-                      onChange={(e) => updateItem(item.id, "specs", e.target.value)}
-                      placeholder="مشخصات فنی این قلم..."
-                      rows={2}
-                      className="w-full mt-2 px-3 py-2 rounded-lg border border-slate-200 focus:border-cyan-500 outline-none text-sm resize-none"
-                    />
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Files upload */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-6 border border-slate-100"
-            >
-              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                <Upload className="w-5 h-5 text-cyan-600" />
-                فایل پیوست (اختیاری)
-              </h3>
-              <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-cyan-400 transition">
-                <Upload className="w-10 h-10 mx-auto mb-2 text-slate-400" />
-                <p className="text-sm text-slate-600 mb-1">
-                  فایل‌های نقشه، عکس قطعه یا کاتالوگ را اینجا رها کنید
-                </p>
-                <p className="text-xs text-slate-400">حداکثر ۱۰ مگابایت، فرمت‌های JPG, PNG, PDF</p>
-                <button
-                  type="button"
-                  className="mt-3 px-4 py-2 rounded-lg bg-slate-100 text-sm font-semibold hover:bg-slate-200 transition"
-                >
-                  انتخاب فایل
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Submit */}
             {error && (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              <div className="mb-3 rounded-xl bg-rose-50 border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700">
                 {error}
               </div>
             )}
-            <div className="flex items-center justify-between gap-4">
-              <Link
-                to="/products"
-                className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-800"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                بازگشت
-              </Link>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                sendMessage();
+              }}
+              className="flex gap-2"
+            >
+              <input
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="نیاز فنی، برند، مدل یا وضعیت مدنظر را بنویسید..."
+                className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 outline-none text-sm"
+              />
               <button
                 type="submit"
-                disabled={!canSubmit}
-                className="px-8 py-3.5 rounded-xl bg-gradient-to-l from-cyan-600 to-blue-700 text-white font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || !input.trim()}
+                className="w-12 rounded-xl bg-cyan-700 hover:bg-cyan-800 text-white flex items-center justify-center transition disabled:opacity-40"
               >
-                ارسال درخواست استعلام
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               </button>
+            </form>
+          </div>
+        </section>
+
+        <aside className="space-y-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5">
+            <h3 className="font-black text-slate-900 flex items-center gap-2 mb-3">
+              <PackageSearch className="w-5 h-5 text-cyan-700" />
+              مبنای پیشنهاد
+            </h3>
+            <div className="space-y-3 text-sm text-slate-600 leading-7">
+              <p>
+                دریا یار از بین
+                <span className="font-black text-slate-900 mx-1">{publishedProducts.length.toLocaleString("fa-IR")}</span>
+                محصول منتشرشده بررسی می‌کند، اما قبل از پیشنهاد نهایی مشخصات کلیدی را کامل می‌پرسد.
+              </p>
             </div>
-          </form>
-        )}
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-5">
+            <h3 className="font-black text-slate-900 flex items-center gap-2 mb-3">
+              <Anchor className="w-5 h-5 text-blue-700" />
+              فیلدهایی که بررسی می‌شود
+            </h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {["گروه محصول", "نوع شناور", "برند", "مدل", "کشور", "وضعیت کالا", "موجودی", "مشخصات فنی", "تگ‌ها", "زمان آماده‌سازی"].map((item) => (
+                <span key={item} className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2 font-bold text-slate-700">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-cyan-50 rounded-2xl border border-cyan-100 p-5">
+            <h3 className="font-black text-cyan-950 mb-2">بعد از پیشنهاد محصول</h3>
+            <p className="text-sm text-cyan-900 leading-7 mb-3">
+              {selectedProduct
+                ? `آخرین پیشنهاد: ${selectedProduct.name}`
+                : "وقتی محصولی با تطبیق کافی پیشنهاد شود، دکمه زیر مستقیم همان محصول را باز می‌کند."}
+            </p>
+            <Link
+              to={selectedProduct ? `/product/${selectedProduct.id}` : "/products"}
+              className={`inline-flex px-4 py-2 rounded-xl text-white text-sm font-bold transition ${
+                selectedProduct ? "bg-cyan-700 hover:bg-cyan-800" : "bg-slate-400 pointer-events-none"
+              }`}
+            >
+              {selectedProduct ? "مشاهده محصول پیشنهادی" : "هنوز محصولی پیشنهاد نشده"}
+            </Link>
+          </div>
+        </aside>
       </div>
     </div>
   );
+}
+
+function ChatBubble({ message }: { message: ChatMessage }) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={`flex gap-3 ${isUser ? "justify-end" : "justify-start"}`}>
+      {!isUser && (
+        <div className="w-9 h-9 rounded-xl bg-cyan-700 text-white flex items-center justify-center flex-shrink-0">
+          <Bot className="w-5 h-5" />
+        </div>
+      )}
+      <div
+        className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-7 whitespace-pre-wrap border ${
+          isUser
+            ? "bg-slate-900 text-white border-slate-900"
+            : "bg-white text-slate-700 border-slate-200 shadow-sm"
+        }`}
+      >
+        {message.content}
+        {!isUser && message.suggestedProductId && (
+          <Link
+            to={`/product/${message.suggestedProductId}`}
+            className="mt-3 inline-flex rounded-lg bg-cyan-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-cyan-800"
+          >
+            مشاهده {message.suggestedProductName || "محصول پیشنهادی"}
+          </Link>
+        )}
+      </div>
+      {isUser && (
+        <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0">
+          <User className="w-5 h-5" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function conditionLabel(condition: Product["condition"]) {
+  if (condition === "new") return "نو";
+  if (condition === "used") return "کارکرده";
+  return "بازسازی‌شده";
 }

@@ -38,6 +38,7 @@ const iconMap: Record<string, any> = {
 
 export function Categories() {
   const { products } = useApp();
+  const publishedProducts = products.filter((product) => product.status === "published");
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -56,7 +57,7 @@ export function Categories() {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
           {productGroups.map((group, i) => {
             const Icon = iconMap[group.icon] || Package;
-            const groupProducts = products.filter((product) => product.productGroupId === group.id);
+            const groupProducts = publishedProducts.filter((product) => product.productGroupId === group.id);
             const subcategories = detailedSubcategoryGroups
               .filter((item) => item.productGroupIds.includes(group.id))
               .flatMap((item) => item.subcategories)

@@ -6,7 +6,7 @@ import { ProductCard } from "../components/ProductCard";
 
 export function Favorites() {
   const { user, favorites, products } = useApp();
-  const favoriteProducts = products.filter((p) => favorites.includes(p.id));
+  const favoriteProducts = products.filter((p) => p.status === "published" && favorites.includes(p.id));
 
   if (!user) {
     return (

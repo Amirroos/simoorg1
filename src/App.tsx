@@ -21,7 +21,7 @@ import { Profile } from "./pages/Profile";
 import { AdminLogin } from "./pages/admin/AdminLogin";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
-import { AdminProducts } from "./pages/admin/AdminProducts";
+import { AdminProducts, AdminRequestedProducts, AdminSupplierProducts } from "./pages/admin/AdminProducts";
 import { AdminSellers } from "./pages/admin/AdminSellers";
 import { AdminUsers } from "./pages/admin/AdminUsers";
 import { AdminOrders } from "./pages/admin/AdminOrders";
@@ -33,6 +33,7 @@ import { AdminRFQs } from "./pages/admin/AdminRFQs";
 import { SellerLayout } from "./pages/seller/SellerLayout";
 import { SellerDashboard } from "./pages/seller/SellerDashboard";
 import { SellerProducts } from "./pages/seller/SellerProducts";
+import { SellerAdminRequests } from "./pages/seller/SellerAdminRequests";
 import { SellerProductForm } from "./pages/seller/SellerProductForm";
 import { SellerOrders } from "./pages/seller/SellerOrders";
 import { SellerProfile } from "./pages/seller/SellerProfile";
@@ -95,6 +96,8 @@ function AppContent() {
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/products/requests" element={<AdminRequestedProducts />} />
+          <Route path="/admin/products/suppliers" element={<AdminSupplierProducts />} />
           <Route path="/admin/sellers" element={<AdminSellers />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
@@ -112,6 +115,7 @@ function AppContent() {
         <Route element={<SellerLayout />}>
           <Route path="/seller" element={<SellerDashboard />} />
           <Route path="/seller/products" element={<SellerProducts />} />
+          <Route path="/seller/admin-requests" element={<SellerAdminRequests />} />
           <Route path="/seller/products/new" element={<SellerProductForm />} />
           <Route path="/seller/products/edit/:id" element={<SellerProductForm />} />
           <Route path="/seller/rfqs" element={<SellerRFQs />} />

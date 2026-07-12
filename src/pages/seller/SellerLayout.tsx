@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   Package,
   PlusCircle,
+  ClipboardList,
   ShoppingCart,
   Settings,
   LogOut,
@@ -16,6 +17,7 @@ import { useApp } from "../../contexts/AppContext";
 const menu = [
   { to: "/seller", label: "داشبورد", icon: LayoutDashboard, end: true },
   { to: "/seller/products", label: "محصولات من", icon: Package },
+  { to: "/seller/admin-requests", label: "درخواست‌های ادمین", icon: ClipboardList },
   { to: "/seller/products/new", label: "افزودن محصول", icon: PlusCircle },
   { to: "/seller/rfqs", label: "مناقصات و استعلام‌ها", icon: FileSearch },
   { to: "/seller/orders", label: "سفارش‌ها", icon: ShoppingCart },
@@ -151,5 +153,9 @@ export function SellerLayout() {
 // خروجی دوم: انتخاب فروشنده‌ای محصولات
 export function useSellerProducts() {
   const { user, products } = useApp();
-  return products.filter((p) => p.sellerId === user?.id || p.sellerName === user?.companyName);
+  return products.filter((p) => {
+    const belongsToSeller = p.sellerId === user?.id || p.sellerName === user?.companyName;
+    if (!belongsToSeller) return false;
+    return p.workflowType !== "admin_request_offer" || p.status === "published";
+  });
 }

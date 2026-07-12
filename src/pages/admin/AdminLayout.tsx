@@ -12,14 +12,34 @@ import {
   Anchor,
   Bell,
   ChevronLeft,
+  ChevronDown,
+  type LucideIcon,
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 
 import { FileSearch } from "lucide-react";
 
-const menu = [
+type AdminMenuChild = { to: string; label: string; end?: boolean };
+type AdminMenuItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  end?: boolean;
+  children?: AdminMenuChild[];
+};
+
+const menu: AdminMenuItem[] = [
   { to: "/admin", label: "داشبورد", icon: LayoutDashboard, end: true },
-  { to: "/admin/products", label: "محصولات", icon: Package },
+  {
+    to: "/admin/products",
+    label: "محصولات",
+    icon: Package,
+    children: [
+      { to: "/admin/products", label: "محصولات انتشار یافته", end: true },
+      { to: "/admin/products/requests", label: "محصولات درخواستی" },
+      { to: "/admin/products/suppliers", label: "محصولات تامین کننده" },
+    ],
+  },
   { to: "/admin/sellers", label: "تأمین‌کنندگان", icon: Store },
   { to: "/admin/users", label: "کاربران", icon: Users },
   { to: "/admin/orders", label: "سفارش‌ها", icon: ShoppingCart },
@@ -41,7 +61,9 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
 
   if (!user || user.role !== "admin") return null;
 
-  const currentPage = menu.find((m) => (m.end ? loc.pathname === m.to : loc.pathname.startsWith(m.to)));
+  const currentPage = menu
+    .flatMap((item) => item.children ?? [item])
+    .find((item) => (item.end ? loc.pathname === item.to : loc.pathname.startsWith(item.to)));
 
   return (
     <div className="min-h-screen bg-slate-100 flex">
@@ -62,6 +84,45 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
           {menu.map((item) => {
             const Icon = item.icon;
+            if (item.children) {
+              const isOpen = loc.pathname.startsWith(item.to);
+              return (
+                <div key={item.to} className="space-y-1">
+                  <Link
+                    to={item.to}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition ${
+                      isOpen
+                        ? "bg-white/10 text-white"
+                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="flex-1">{item.label}</span>
+                    <ChevronDown className={`w-4 h-4 transition ${isOpen ? "rotate-180" : ""}`} />
+                  </Link>
+                  {isOpen && (
+                    <div className="pr-8 space-y-1">
+                      {item.children.map((child) => (
+                        <NavLink
+                          key={child.to}
+                          to={child.to}
+                          end={child.end}
+                          className={({ isActive }) =>
+                            `block px-4 py-2 rounded-lg text-xs font-bold transition ${
+                              isActive
+                                ? "bg-gradient-to-l from-cyan-600 to-blue-700 text-white shadow-lg shadow-cyan-500/20"
+                                : "text-slate-400 hover:bg-white/5 hover:text-white"
+                            }`
+                          }
+                        >
+                          {child.label}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
             return (
               <NavLink
                 key={item.to}
@@ -138,6 +199,23 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
             <div className="flex gap-1 px-4 py-2 min-w-max">
               {menu.map((item) => {
                 const Icon = item.icon;
+                if (item.children) {
+                  return item.children.map((child) => (
+                    <NavLink
+                      key={child.to}
+                      to={child.to}
+                      end={child.end}
+                      className={({ isActive }) =>
+                        `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                          isActive ? "bg-cyan-100 text-cyan-700" : "text-slate-600"
+                        }`
+                      }
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {child.label}
+                    </NavLink>
+                  ));
+                }
                 return (
                   <NavLink
                     key={item.to}

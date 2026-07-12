@@ -51,7 +51,7 @@ export function Footer() {
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/products" className="hover:text-cyan-300 transition">محصولات</Link></li>
               <li><Link to="/categories" className="hover:text-cyan-300 transition">گروه‌های محصول</Link></li>
-              <li><Link to="/rfq" className="hover:text-cyan-300 transition">درخواست استعلام</Link></li>
+              <li><Link to="/rfq" className="hover:text-cyan-300 transition">دریا یار</Link></li>
               <li><Link to="/orders" className="hover:text-cyan-300 transition">سفارش‌های من</Link></li>
               <li><a href="#" className="hover:text-cyan-300 transition">فروشندگان برتر</a></li>
               <li><a href="#" className="hover:text-cyan-300 transition">قوانین و مقررات</a></li>

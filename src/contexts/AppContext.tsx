@@ -113,6 +113,30 @@ export interface RFQ {
   createdAt: string;
 }
 
+export interface AdminProductRequest {
+  id: string;
+  title: string;
+  name: string;
+  categoryId: string;
+  productGroupId: string;
+  subcategoryId?: string;
+  brand: string;
+  model: string;
+  country: string;
+  hasPrice: boolean;
+  image: string;
+  vesselTypes: string[];
+  condition: Product["condition"];
+  shortDesc: string;
+  description: string;
+  specs: Record<string, string>;
+  leadTime: number;
+  tags?: string[];
+  neededBy?: string;
+  status: "open" | "closed";
+  createdAt: string;
+}
+
 export function isRFQPublished(rfq: RFQ) {
   if (rfq.status === "published" || rfq.status === "closed") return true;
   const createdAt = new Date(rfq.createdAt).getTime();
@@ -124,6 +148,7 @@ interface AppState {
   user: User | null;
   users: User[];
   products: Product[];
+  adminProductRequests: AdminProductRequest[];
   login: (mobile: string, name: string, role?: User["role"], profile?: Partial<User>) => boolean;
   loginWithCredentials: (username: string, password: string) => User | null;
   logout: () => void;
@@ -138,6 +163,14 @@ interface AppState {
   addProduct: (data: Omit<Product, "id" | "gallery" | "rating" | "reviewCount">) => Product;
   updateProduct: (id: string, patch: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
+  publishProductWithProfit: (id: string, profitPercent: number) => void;
+  rejectProduct: (id: string) => void;
+  addAdminProductRequest: (data: Omit<AdminProductRequest, "id" | "status" | "createdAt">) => AdminProductRequest;
+  closeAdminProductRequest: (id: string) => void;
+  submitAdminRequestOffer: (
+    requestId: string,
+    data: { price: number; stock: number; leadTime: number; note?: string }
+  ) => Product | null;
 
   // cart
   cart: CartItem[];
@@ -309,11 +342,41 @@ function loadStored<T>(key: string, fallback: T): T {
   }
 }
 
+function normalizeAdminProductRequest(request: Partial<AdminProductRequest>): AdminProductRequest {
+  const productGroupId = request.productGroupId || "";
+  return {
+    id: request.id || "APR-" + Date.now().toString().slice(-6),
+    title: request.title || request.name || "درخواست محصول",
+    name: request.name || request.title || "درخواست محصول",
+    categoryId: request.categoryId || "",
+    productGroupId,
+    subcategoryId: request.subcategoryId || "",
+    brand: request.brand || "",
+    model: request.model || "",
+    country: request.country || "ایران",
+    hasPrice: request.hasPrice ?? true,
+    image: request.image || "/media/product-pump.webp",
+    vesselTypes: request.vesselTypes?.length ? request.vesselTypes : ["سایر شناورها"],
+    condition: request.condition || "new",
+    shortDesc: request.shortDesc || request.description || request.title || "درخواست تامین محصول",
+    description: request.description || request.shortDesc || request.title || "درخواست تامین محصول",
+    specs: request.specs || {},
+    leadTime: request.leadTime ?? 3,
+    tags: request.tags || [],
+    neededBy: request.neededBy || "",
+    status: request.status || "open",
+    createdAt: request.createdAt || new Date().toISOString(),
+  };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => loadStored<User | null>("simorgh_user", null));
   const [users, setUsers] = useState<User[]>(() => loadStored<User[]>("simorgh_users", SEED_USERS));
   const [products, setProducts] = useState<Product[]>(() =>
     loadStored<Product[]>("simorgh_products", seedProducts).map(normalizeProductTaxonomy)
+  );
+  const [adminProductRequests, setAdminProductRequests] = useState<AdminProductRequest[]>(() =>
+    loadStored<AdminProductRequest[]>("simorgh_admin_product_requests", []).map(normalizeAdminProductRequest)
   );
   const [cart, setCart] = useState<CartItem[]>(() => loadStored<CartItem[]>("simorgh_cart", []));
   const [reviews, setReviews] = useState<Review[]>(() => loadStored<Review[]>("simorgh_reviews", REVIEWS_SEED));
@@ -327,6 +390,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user]);
   useEffect(() => { localStorage.setItem("simorgh_users", JSON.stringify(users)); }, [users]);
   useEffect(() => { localStorage.setItem("simorgh_products", JSON.stringify(products)); }, [products]);
+  useEffect(() => { localStorage.setItem("simorgh_admin_product_requests", JSON.stringify(adminProductRequests)); }, [adminProductRequests]);
   useEffect(() => { localStorage.setItem("simorgh_cart", JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem("simorgh_reviews", JSON.stringify(reviews)); }, [reviews]);
   useEffect(() => { localStorage.setItem("simorgh_favorites", JSON.stringify(favorites)); }, [favorites]);
@@ -432,24 +496,157 @@ export function AppProvider({ children }: { children: ReactNode }) {
       gallery: [],
       rating: 5,
       reviewCount: 0,
+      status: data.status || "pending",
+      workflowType: data.workflowType || "supplier_offer",
+      supplierBasePrice: data.supplierBasePrice ?? data.price,
+      submittedAt: data.submittedAt || new Date().toISOString(),
     };
     setProducts((prev) => [newProduct, ...prev]);
     return newProduct;
   };
 
   const updateProduct: AppState["updateProduct"] = (id, patch) => {
-    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    setProducts((prev) =>
+      prev.map((p) => {
+        const isLockedSellerProduct =
+          user?.role === "seller" && p.status === "pending" && (p.sellerId === user.id || p.sellerName === user.companyName);
+        if (p.id !== id || isLockedSellerProduct) return p;
+        return { ...p, ...patch };
+      })
+    );
   };
 
   const deleteProduct: AppState["deleteProduct"] = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) =>
+      prev.filter((p) => {
+        const isLockedSellerProduct =
+          user?.role === "seller" && p.status === "pending" && (p.sellerId === user.id || p.sellerName === user.companyName);
+        return p.id !== id || isLockedSellerProduct;
+      })
+    );
+  };
+
+  const publishProductWithProfit: AppState["publishProductWithProfit"] = (id, profitPercent) => {
+    let publishedRequestId: string | undefined;
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        publishedRequestId = p.adminRequestId;
+        const basePrice = p.supplierBasePrice ?? p.price;
+        const nextPrice = p.hasPrice ? Math.round(basePrice * (1 + profitPercent / 100)) : 0;
+        return {
+          ...p,
+          price: nextPrice,
+          supplierBasePrice: basePrice,
+          adminProfitPercent: profitPercent,
+          status: "published",
+          approvedAt: new Date().toISOString(),
+        };
+      })
+    );
+    if (publishedRequestId) {
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.adminRequestId === publishedRequestId && p.id !== id && p.status === "pending"
+            ? { ...p, status: "rejected" }
+            : p
+        )
+      );
+      setAdminProductRequests((prev) =>
+        prev.map((request) =>
+          request.id === publishedRequestId ? { ...request, status: "closed" } : request
+        )
+      );
+    }
+  };
+
+  const rejectProduct: AppState["rejectProduct"] = (id) => {
+    setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, status: "rejected" } : p)));
+  };
+
+  const addAdminProductRequest: AppState["addAdminProductRequest"] = (data) => {
+    const request: AdminProductRequest = {
+      ...data,
+      id: "APR-" + Date.now().toString().slice(-6),
+      status: "open",
+      createdAt: new Date().toISOString(),
+    };
+    setAdminProductRequests((prev) => [request, ...prev]);
+    return request;
+  };
+
+  const closeAdminProductRequest: AppState["closeAdminProductRequest"] = (id) => {
+    setAdminProductRequests((prev) =>
+      prev.map((request) => (request.id === id ? { ...request, status: "closed" } : request))
+    );
+  };
+
+  const submitAdminRequestOffer: AppState["submitAdminRequestOffer"] = (requestId, data) => {
+    if (!user || user.role !== "seller") return null;
+    const request = adminProductRequests.find((item) => item.id === requestId && item.status === "open");
+    if (!request) return null;
+
+    const existing = products.find((product) => product.adminRequestId === requestId && product.sellerId === user.id);
+    if (existing?.status === "pending") return existing;
+    const offerPatch: Partial<Product> = {
+      price: request.hasPrice ? data.price : 0,
+      supplierBasePrice: request.hasPrice ? data.price : 0,
+      hasPrice: request.hasPrice,
+      stock: data.stock,
+      leadTime: data.leadTime,
+      supplierOfferNote: data.note,
+      status: "pending",
+      submittedAt: new Date().toISOString(),
+    };
+
+    if (existing) {
+      setProducts((prev) => prev.map((product) => (product.id === existing.id ? { ...product, ...offerPatch } : product)));
+      return { ...existing, ...offerPatch };
+    }
+
+    const newProduct: Product = {
+      id: "p-" + Date.now(),
+      name: request.name || request.title,
+      categoryId: request.categoryId,
+      productGroupId: request.productGroupId,
+      subcategoryId: request.subcategoryId,
+      brand: request.brand,
+      model: request.model,
+      country: request.country,
+      price: request.hasPrice ? data.price : 0,
+      supplierBasePrice: request.hasPrice ? data.price : 0,
+      hasPrice: request.hasPrice,
+      image: request.image,
+      gallery: [],
+      rating: 5,
+      reviewCount: 0,
+      sellerId: user.id,
+      sellerName: user.companyName || user.name,
+      sellerScore: user.rating || 5,
+      stock: data.stock,
+      vesselTypes: request.vesselTypes,
+      condition: request.condition,
+      shortDesc: request.shortDesc,
+      description: request.description || request.shortDesc,
+      specs: request.specs,
+      leadTime: data.leadTime,
+      tags: request.tags,
+      status: "pending",
+      workflowType: "admin_request_offer",
+      adminRequestId: request.id,
+      supplierOfferNote: data.note,
+      submittedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+    setProducts((prev) => [newProduct, ...prev]);
+    return newProduct;
   };
 
   // === Cart with stock control ===
   const addToCart: AppState["addToCart"] = (product, qty = 1) => {
     // بررسی وضعیت محصول و موجودی
     const current = products.find((p) => p.id === product.id);
-    if (!current || current.stock <= 0) {
+    if (!current || current.status !== "published" || current.stock <= 0) {
       return { ok: false, reason: "اتمام موجودی" };
     }
     const existing = cart.find((i) => i.product.id === product.id);
@@ -478,7 +675,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     }
     const current = products.find((p) => p.id === productId);
-    if (!current) return { ok: false, reason: "محصول یافت نشد" };
+    if (!current || current.status !== "published") return { ok: false, reason: "محصول یافت نشد" };
     if (qty > current.stock) {
       return { ok: false, reason: `حداکثر ${current.stock.toLocaleString("fa-IR")} عدد موجود است` };
     }
@@ -529,7 +726,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // مجدد بررسی موجودی
     for (const item of cart) {
       const current = products.find((p) => p.id === item.product.id);
-      if (!current || current.stock < item.qty) return null;
+      if (!current || current.status !== "published" || current.stock < item.qty) return null;
     }
     const total = cart.reduce((sum, i) => sum + i.product.price * i.qty, 0);
     const order: Order = {
@@ -609,6 +806,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         user,
         users,
         products,
+        adminProductRequests,
         login,
         loginWithCredentials,
         logout,
@@ -619,6 +817,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addProduct,
         updateProduct,
         deleteProduct,
+        publishProductWithProfit,
+        rejectProduct,
+        addAdminProductRequest,
+        closeAdminProductRequest,
+        submitAdminRequestOffer,
         cart,
         addToCart,
         removeFromCart,

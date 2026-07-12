@@ -24,7 +24,14 @@ export interface Product {
   specs: Record<string, string>;
   leadTime: number; // days
   tags?: string[];
-  status?: "published" | "draft" | "pending";
+  status?: "published" | "draft" | "pending" | "rejected";
+  workflowType?: "seed" | "supplier_offer" | "admin_request_offer";
+  adminRequestId?: string;
+  supplierBasePrice?: number;
+  adminProfitPercent?: number;
+  approvedAt?: string;
+  submittedAt?: string;
+  supplierOfferNote?: string;
   createdAt?: string;
 }
 
@@ -864,6 +871,9 @@ export function normalizeProductTaxonomy(product: Product): Product {
   return {
     ...product,
     image: normalizeImage(product.image, product.name, normalizedCategoryId, product.id),
+    status: product.status || "published",
+    workflowType: product.workflowType || "seed",
+    supplierBasePrice: product.supplierBasePrice ?? product.price,
     ...(validCategory
       ? {}
       : mappedCategory || { categoryId: "other-marine-equipment", productGroupId: "other-products" }),

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, ShoppingCart, Star, MapPin, CheckCircle2, Truck } from "lucide-react";
+import { Heart, ShoppingCart, Star, CheckCircle2, Truck } from "lucide-react";
 import type { Product } from "../data/products";
 import { formatPriceToman, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
@@ -133,11 +133,11 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
           <span className="text-xs text-slate-500">({product.reviewCount.toLocaleString("fa-IR")} نظر)</span>
         </div>
 
-        {/* Seller */}
+        {/* Fulfillment */}
         <div className="flex items-center justify-between text-xs text-slate-600 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3 text-cyan-600" />
-            <span className="font-medium">{product.sellerName}</span>
+            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+            <span className="font-medium">سیمرغ تامین دریا</span>
           </div>
           <div className="flex items-center gap-1">
             <Truck className="w-3 h-3 text-slate-400" />

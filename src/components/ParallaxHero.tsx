@@ -301,7 +301,7 @@ export function ParallaxHero() {
               to="/rfq"
               className="px-8 py-4 rounded-2xl glass text-white font-bold hover:bg-white/20 transition flex items-center gap-2"
             >
-              <span>درخواست استعلام قیمت</span>
+              <span>دریا یار</span>
             </Link>
           </motion.div>
 
@@ -315,7 +315,7 @@ export function ParallaxHero() {
             {[
               { value: "۲۵۰۰+", label: "قطعه ثبت شده", icon: Package },
               { value: "۱۲۰+", label: "فروشنده تأییدشده", icon: Ship },
-              { value: "۸۵٪", label: "پاسخ سریع RFQ", icon: Compass },
+              { value: "۸۵٪", label: "پیشنهاد هوشمند", icon: Compass },
               { value: "۲۴/۷", label: "پشتیبانی", icon: Waves },
             ].map((stat, i) => (
               <div

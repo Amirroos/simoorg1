@@ -153,7 +153,7 @@ export function Cart() {
                   <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
                     <span>{item.product.brand}</span>
                     <span>•</span>
-                    <span>{item.product.sellerName}</span>
+                    <span>سیمرغ تامین دریا</span>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between">

@@ -39,7 +39,7 @@ export function Products() {
   }, [sortParam]);
 
   const filtered = useMemo(() => {
-    let result = [...products];
+    let result = products.filter((product) => product.status === "published");
 
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -99,7 +99,7 @@ export function Products() {
     }
 
     return result;
-  }, [search, selectedGroup, selectedSubcategory, selectedVessel, priceRange, availability, condition, sortBy]);
+  }, [products, search, selectedGroup, selectedSubcategory, selectedVessel, priceRange, availability, condition, sortBy]);
 
   const clearFilters = () => {
     setSearch("");
@@ -124,7 +124,7 @@ export function Products() {
           >
             <h1 className="text-3xl md:text-4xl font-black mb-2">بازارگاه قطعات و تجهیزات</h1>
             <p className="text-slate-300 mb-6">
-              بیش از {products.length.toLocaleString("fa-IR")} محصول در {productGroups.length.toLocaleString("fa-IR")} گروه محصول
+              بیش از {products.filter((product) => product.status === "published").length.toLocaleString("fa-IR")} محصول در {productGroups.length.toLocaleString("fa-IR")} گروه محصول
             </p>
 
             {/* Search Bar */}
@@ -253,7 +253,7 @@ export function Products() {
               <div className="text-center py-20 bg-white rounded-2xl border border-slate-100">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-bold text-slate-800 mb-2">کالایی یافت نشد</h3>
-                <p className="text-slate-500 mb-6">فیلترهای جستجو را تغییر دهید یا درخواست RFQ ثبت کنید</p>
+                <p className="text-slate-500 mb-6">فیلترهای جستجو را تغییر دهید یا از دریا یار کمک بگیرید</p>
                 <button
                   onClick={clearFilters}
                   className="px-6 py-3 rounded-xl bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"

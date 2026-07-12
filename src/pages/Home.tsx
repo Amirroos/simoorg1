@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Flame, Shield, Truck, Award, Sparkles, Zap, Anchor, Compass, Zap as Zap2, LifeBuoy, Fuel, TrendingUp, Users, FileSearch, Star, Radar, Radio, Settings, PaintBucket, Package, Wind, Gauge, RefreshCw, Utensils } from "lucide-react";
 import { ParallaxHero } from "../components/ParallaxHero";
 import { ProductCard } from "../components/ProductCard";
-import { productGroups, sellers } from "../data/products";
+import { productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 
 const iconMap: Record<string, any> = {
@@ -24,16 +24,25 @@ const iconMap: Record<string, any> = {
   Utensils,
 };
 
+const simorghServiceCards = [
+  { id: "simorgh-quality", name: "کنترل و تایید سیمرغ", rating: 5, location: "بررسی پیش از انتشار" },
+  { id: "simorgh-pricing", name: "قیمت‌گذاری نهایی سیمرغ", rating: 5, location: "اعمال سود و تایید ادمین" },
+  { id: "simorgh-sourcing", name: "تامین متمرکز سیمرغ", rating: 5, location: "بدون نمایش نام تامین‌کننده" },
+  { id: "simorgh-support", name: "پشتیبانی خرید سیمرغ", rating: 5, location: "پیگیری سفارش و اصالت کالا" },
+  { id: "simorgh-rfq", name: "درخواست تامین سیمرغ", rating: 5, location: "جمع‌آوری پیشنهادهای تامین" },
+];
+
 export function Home() {
   const { products } = useApp();
+  const publishedProducts = products.filter((p) => p.status === "published");
   // Featured: top rated + with stock
-  const featured = [...products]
+  const featured = [...publishedProducts]
     .filter((p) => p.stock > 0)
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 8);
 
   // New arrivals
-  const newArrivals = products.slice(0, 4);
+  const newArrivals = publishedProducts.slice(0, 4);
 
   return (
     <div>
@@ -180,7 +189,7 @@ export function Home() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-cyan-200 text-xs font-semibold mb-4">
                 <FileSearch className="w-4 h-4" />
-                سیستم استعلام قیمت (RFQ)
+                دریا یار
               </div>
               <h2 className="text-3xl md:text-5xl font-black text-white leading-tight mb-4">
                 قطعه نایاب دارید؟
@@ -188,15 +197,15 @@ export function Home() {
                 <span className="gradient-text">ما پیدایش می‌کنیم</span>
               </h2>
               <p className="text-lg text-slate-200 leading-8 mb-6">
-                درخواست استعلام قیمت خود را ثبت کنید. سامانه به صورت هوشمند آن را برای فروشندگان
-                مرتبط ارسال می‌کند و شما بهترین پیشنهاد را انتخاب می‌کنید.
+                نیاز فنی شناور را به زبان ساده بگویید. دریا یار مرحله‌به‌مرحله مشخصات لازم را می‌پرسد
+                و از بین محصولات سایت گزینه مناسب را پیشنهاد می‌دهد.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/rfq"
                   className="px-6 py-3.5 rounded-xl bg-white text-blue-900 font-bold shadow-xl hover:scale-105 transition flex items-center justify-center gap-2"
                 >
-                  ثبت RFQ جدید
+                  گفت‌وگو با دریا یار
                   <ArrowLeft className="w-4 h-4" />
                 </Link>
                 <a
@@ -281,7 +290,7 @@ export function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {sellers.map((s, i) => (
+          {simorghServiceCards.map((s, i) => (
             <motion.div
               key={s.id}
               initial={{ opacity: 0, y: 20 }}

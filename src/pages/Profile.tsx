@@ -6,7 +6,6 @@ import {
   Anchor,
   BadgeCheck,
   BriefcaseBusiness,
-  CalendarDays,
   CheckCircle2,
   FileText,
   FileUp,

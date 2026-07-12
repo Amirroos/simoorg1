@@ -116,7 +116,7 @@ export function BuyerRFQs() {
                                   isLowest ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200"
                                 }`}>
                                   <div className="flex justify-between items-start mb-2">
-                                    <div className="font-bold text-sm text-slate-800">{bid.sellerName}</div>
+                                    <div className="font-bold text-sm text-slate-800">پیشنهاد سیمرغ تامین دریا</div>
                                     <div className={`font-black ${isLowest ? "text-emerald-700 text-lg" : "text-slate-600 text-base"}`}>
                                       {formatPriceToman(bid.price)}
                                     </div>

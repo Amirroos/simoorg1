@@ -35,7 +35,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
     { to: "/", label: "خانه" },
     { to: "/products", label: "محصولات" },
     { to: "/categories", label: "گروه محصول" },
-    { to: "/rfq", label: "ثبت استعلام (RFQ)" },
+    { to: "/rfq", label: "دریا یار" },
   ];
 
   if (user && user.role === "buyer") {
