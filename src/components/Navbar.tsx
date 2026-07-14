@@ -33,8 +33,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
 
   const navLinks = [
     { to: "/", label: "خانه" },
-    { to: "/products", label: "محصولات" },
-    { to: "/categories", label: "گروه محصول" },
+    { to: "/products", label: "فروشگاه محصولات" },
     { to: "/rfq", label: "دریا یار" },
   ];
 

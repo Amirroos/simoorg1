@@ -91,7 +91,7 @@ export function Home() {
             </h2>
           </div>
           <Link
-            to="/categories"
+            to="/products"
             className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-cyan-700 hover:text-cyan-800 transition"
           >
             مشاهده همه

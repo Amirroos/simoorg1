@@ -9,7 +9,6 @@ import { AuthModal } from "./components/AuthModal";
 import { Home } from "./pages/Home";
 import { Products } from "./pages/Products";
 import { ProductDetail } from "./pages/ProductDetail";
-import { Categories } from "./pages/Categories";
 import { Cart } from "./pages/Cart";
 import { RFQ } from "./pages/RFQ";
 import { Orders } from "./pages/Orders";
@@ -58,7 +57,7 @@ function PublicLayout({ onOpenAuth }: { onOpenAuth: () => void }) {
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/categories" element={<Categories />} />
+          <Route path="/categories" element={<Products />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/rfq" element={<RFQ />} />
           <Route path="/my-rfqs" element={<BuyerRFQs />} />

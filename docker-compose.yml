@@ -1,8 +1,29 @@
 services:
+  darya-yar:
+    image: marine-parts-darya-yar:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.darya-yar
+    environment:
+      HOST: 0.0.0.0
+      PORT: 5173
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-openrouter/free}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   marine-parts-marketplace:
     image: marine-parts-marketplace:latest
     build:
       context: .
+    depends_on:
+      darya-yar:
+        condition: service_healthy
     ports:
       - "80:80"
     healthcheck:
