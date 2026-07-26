@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Flame, Shield, Truck, Award, Sparkles, Zap, Anchor, Compass, Zap as Zap2, LifeBuoy, Fuel, TrendingUp, Users, FileSearch, Star, Radar, Radio, Settings, PaintBucket, Package, Wind, Gauge, RefreshCw, Utensils } from "lucide-react";
-import { ParallaxHero } from "../components/ParallaxHero";
+import { MarketplaceHero } from "../components/MarketplaceHero";
 import { ProductCard } from "../components/ProductCard";
 import { productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
@@ -46,11 +46,11 @@ export function Home() {
 
   return (
     <div>
-      {/* Hero with parallax video */}
-      <ParallaxHero />
+      {/* Product-first marketplace entrance */}
+      <MarketplaceHero products={publishedProducts} />
 
       {/* Trust strip */}
-      <section className="relative -mt-8 z-10 max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-3">
         <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { icon: Shield, title: "ضمانت اصالت", desc: "تمامی کالاها تأیید شده" },

@@ -1,3 +1,12 @@
+import {
+  catalogVisualFamily,
+  getSheetCatalogGroupId,
+  getSheetCatalogSubgroupId,
+  mapSheetGroupToLegacyProductGroup,
+  sheetCatalogRecords,
+  type SheetCatalogRecord,
+} from "./sheetCatalog";
+
 export interface Product {
   id: string;
   name: string;
@@ -33,6 +42,13 @@ export interface Product {
   submittedAt?: string;
   supplierOfferNote?: string;
   createdAt?: string;
+  catalogGroupId?: string;
+  catalogGroupName?: string;
+  catalogSubgroupId?: string;
+  catalogSubgroupName?: string;
+  catalogCategory?: string;
+  catalogCategoryEn?: string;
+  catalogSource?: string;
 }
 
 export interface Category {
@@ -69,7 +85,43 @@ const imagePalettes: Record<string, [string, string, string]> = {
   default: ["#0e7490", "#0f172a", "#f59e0b"],
 };
 
+const generatedCatalogPhotos: Record<string, string> = {
+  engine: "/media/catalog-generated/engine.jpg",
+  "engine-parts": "/media/catalog-generated/engine-parts.jpg",
+  gear: "/media/catalog-generated/gear.jpg",
+  propulsion: "/media/catalog-generated/propulsion.jpg",
+  pump: "/media/catalog-generated/pump.jpg",
+  filter: "/media/catalog-generated/filter.jpg",
+  valve: "/media/catalog-generated/valve.jpg",
+  radar: "/media/catalog-generated/radar.jpg",
+  radio: "/media/catalog-generated/radio.jpg",
+  electrical: "/media/catalog-generated/electrical.jpg",
+  battery: "/media/catalog-generated/battery.jpg",
+  switchgear: "/media/catalog-generated/switchgear.jpg",
+  safety: "/media/catalog-generated/safety.jpg",
+  deck: "/media/catalog-generated/deck.jpg",
+  mooring: "/media/catalog-generated/mooring.jpg",
+  hvac: "/media/catalog-generated/hvac.jpg",
+  hydraulic: "/media/catalog-generated/hydraulic.jpg",
+  material: "/media/catalog-generated/material.jpg",
+  galley: "/media/catalog-generated/galley.jpg",
+  accommodation: "/media/catalog-generated/accommodation.jpg",
+  tool: "/media/catalog-generated/tool.jpg",
+  environment: "/media/catalog-generated/environment.jpg",
+  control: "/media/catalog-generated/control.jpg",
+  hull: "/media/catalog-generated/hull.jpg",
+  computing: "/media/catalog-generated/computing.jpg",
+  marine: "/media/catalog-generated/marine.jpg",
+  navigation: "/media/catalog-generated/radar.jpg",
+  fishing: "/media/catalog-generated/marine.jpg",
+  paint: "/media/catalog-generated/material.jpg",
+  default: "/media/catalog-generated/marine.jpg",
+};
+
 export function marineImage(title: string, kind: keyof typeof imagePalettes = "default") {
+  const generatedPhoto = generatedCatalogPhotos[kind] || generatedCatalogPhotos.default;
+  if (generatedPhoto) return generatedPhoto;
+
   const [primary, dark, accent] = imagePalettes[kind] || imagePalettes.default;
   const safeTitle = title.replace(/&/g, "و").slice(0, 42);
   const svg = `
@@ -112,6 +164,91 @@ export function marineImage(title: string, kind: keyof typeof imagePalettes = "d
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+const catalogArtworkCache = new Map<string, string>();
+const catalogArtworkPalettes: Array<[string, string, string]> = [
+  ["#0e7490", "#082f49", "#67e8f9"],
+  ["#1d4ed8", "#172554", "#93c5fd"],
+  ["#0f766e", "#042f2e", "#5eead4"],
+  ["#7c3aed", "#2e1065", "#c4b5fd"],
+  ["#b45309", "#451a03", "#fcd34d"],
+  ["#be123c", "#4c0519", "#fda4af"],
+  ["#475569", "#0f172a", "#cbd5e1"],
+];
+
+function catalogArtworkShape(family: string, accent: string) {
+  const common = `fill="none" stroke="#f8fafc" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"`;
+  const accented = `fill="none" stroke="${accent}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"`;
+
+  const shapes: Record<string, string> = {
+    engine: `<rect x="350" y="245" width="500" height="300" rx="58" ${common}/><path d="M430 245v-80h120v80m100 0v-80h120v80M320 390h-95m750 0h-95M450 545v80m300-80v80" ${accented}/><circle cx="470" cy="390" r="62" ${common}/><circle cx="730" cy="390" r="62" ${common}/><path d="M532 390h136" ${accented}/>`,
+    gear: `<circle cx="600" cy="390" r="185" ${common}/><circle cx="600" cy="390" r="72" ${accented}/><path d="M600 160v80m0 300v80M370 390h80m300 0h80M438 228l56 56m212 212 56 56m0-324-56 56M494 496l-56 56" ${common}/>`,
+    pump: `<circle cx="560" cy="390" r="175" ${common}/><circle cx="560" cy="390" r="58" ${accented}/><path d="M735 390h190v-115M385 390H235v125M560 332l86-50m-86 108 95 55m-95-55-5 110" ${common}/>`,
+    valve: `<path d="M180 390h285m270 0h285M465 255l270 270V255L465 525Z" ${common}/><path d="M600 255V150m-95 0h190" ${accented}/><circle cx="600" cy="390" r="48" ${accented}/>`,
+    radar: `<circle cx="600" cy="390" r="220" ${common}/><circle cx="600" cy="390" r="135" ${accented}/><circle cx="600" cy="390" r="42" fill="${accent}"/><path d="M600 390l150-150M380 390h440M600 170v440" ${common}/><path d="M730 285a165 165 0 0 1 20 195" ${accented}/>`,
+    radio: `<path d="M600 590V300m-110 290h220M600 300l-70 90h140Z" ${common}/><path d="M460 270a190 190 0 0 0 0 240m280-240a190 190 0 0 1 0 240M385 205a285 285 0 0 0 0 370m430-370a285 285 0 0 1 0 370" ${accented}/>`,
+    electrical: `<rect x="345" y="240" width="510" height="315" rx="44" ${common}/><path d="M470 240v-65h80v65m100 0v-65h80v65M465 390h95m-48-48v96m165-48h95" ${accented}/><path d="M610 280l-70 130h75l-35 100 105-155h-78l40-75Z" fill="${accent}"/>`,
+    safety: `<circle cx="600" cy="390" r="210" ${common}/><circle cx="600" cy="390" r="95" ${common}/><path d="M452 242l82 82m132 132 82 82m0-296-82 82M534 456l-82 82" ${accented}/>`,
+    deck: `<path d="M600 160v420M450 270h300M390 470c40 115 110 165 210 165s170-50 210-165M390 470l-95 35m515-35 95 35" ${common}/><circle cx="600" cy="205" r="46" ${accented}/>`,
+    hvac: `<circle cx="600" cy="390" r="225" ${common}/><circle cx="600" cy="390" r="44" fill="${accent}"/><path d="M600 346c-12-135 45-170 135-145 20 95-30 150-135 189m44 0c135-12 170 45 145 135-95 20-150-30-189-135m0 44c12 135-45 170-135 145-20-95 30-150 135-189m-44 0c-135 12-170-45-145-135 95-20 150 30 189 135" ${accented}/>`,
+    hydraulic: `<rect x="270" y="320" width="380" height="145" rx="35" ${common}/><path d="M650 390h285M770 320v140M270 390H155" ${accented}/><circle cx="220" cy="390" r="54" ${common}/><circle cx="980" cy="390" r="54" ${common}/>`,
+    material: `<path d="M410 270h380l-35 320H445L410 270Z" ${common}/><path d="M450 270v-75h300v75M495 390h210" ${accented}/><path d="M600 315c-55 70-72 105-72 145a72 72 0 0 0 144 0c0-40-17-75-72-145Z" fill="${accent}"/>`,
+    galley: `<rect x="330" y="245" width="540" height="320" rx="42" ${common}/><circle cx="470" cy="355" r="62" ${accented}/><circle cx="690" cy="355" r="62" ${accented}/><path d="M420 500h360M815 300v200" ${common}/>`,
+    tool: `<path d="M420 555l305-305c-28-70-12-125 48-172l18 105 105 18c-47 60-102 76-172 48L420 555Z" ${common}/><circle cx="385" cy="590" r="75" ${accented}/>`,
+    environment: `<rect x="360" y="220" width="480" height="350" rx="64" ${common}/><path d="M430 220v-65h340v65M500 325c55-70 145-70 200 0m-210 95 110 95 110-95" ${accented}/><circle cx="505" cy="350" r="28" fill="${accent}"/><circle cx="695" cy="350" r="28" fill="${accent}"/>`,
+    control: `<rect x="320" y="215" width="560" height="350" rx="54" ${common}/><circle cx="500" cy="380" r="105" ${accented}/><path d="M500 380l62-62M685 315h105m-105 80h105m-105 80h70" ${common}/>`,
+    marine: `<rect x="345" y="235" width="510" height="335" rx="48" ${common}/><path d="M430 320h340M430 410h220M430 500h280" ${accented}/><circle cx="790" cy="410" r="50" ${common}/>`,
+  };
+
+  return shapes[family] || shapes.marine;
+}
+
+function buildCatalogArtwork(product: Pick<Product, "id" | "name" | "model" | "brand" | "image" | "catalogCategoryEn">) {
+  const [, family = "marine"] = product.image.split(":");
+  let hash = 0;
+  for (let index = 0; index < product.id.length; index += 1) {
+    hash = (hash * 31 + product.id.charCodeAt(index)) >>> 0;
+  }
+  const [primary, dark, accent] = catalogArtworkPalettes[hash % catalogArtworkPalettes.length];
+  const safeTitle = product.name.replace(/[&<>]/g, "").slice(0, 44);
+  const safeBrand = product.brand.replace(/[&<>]/g, "").slice(0, 28);
+  const safeModel = product.model.replace(/[&<>]/g, "").slice(0, 38);
+  const safeEnglish = (product.catalogCategoryEn || family).replace(/[&<>]/g, "").slice(0, 52);
+  const shape = catalogArtworkShape(family, accent);
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+      <defs>
+        <linearGradient id="catalog-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="${primary}"/>
+          <stop offset="0.62" stop-color="${dark}"/>
+          <stop offset="1" stop-color="#020617"/>
+        </linearGradient>
+        <pattern id="catalog-grid" width="54" height="54" patternUnits="userSpaceOnUse">
+          <path d="M54 0H0V54" fill="none" stroke="#fff" stroke-opacity=".055"/>
+        </pattern>
+      </defs>
+      <rect width="1200" height="900" fill="url(#catalog-bg)"/>
+      <rect width="1200" height="900" fill="url(#catalog-grid)"/>
+      <circle cx="180" cy="130" r="250" fill="${accent}" opacity=".12"/>
+      <circle cx="1030" cy="610" r="300" fill="${primary}" opacity=".22"/>
+      <g>${shape}</g>
+      <rect x="90" y="690" width="1020" height="138" rx="34" fill="#020617" opacity=".72" stroke="#fff" stroke-opacity=".16"/>
+      <text x="600" y="744" text-anchor="middle" direction="rtl" unicode-bidi="plaintext" font-family="Tahoma, Arial" font-size="36" font-weight="800" fill="#fff">${safeTitle}</text>
+      <text x="600" y="790" text-anchor="middle" font-family="Arial, Tahoma" font-size="23" font-weight="700" fill="${accent}">${safeBrand} · ${safeModel}</text>
+      <text x="600" y="865" text-anchor="middle" font-family="Arial" font-size="18" font-weight="700" letter-spacing="3" fill="#cbd5e1">${safeEnglish}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+export function getProductImageSource(product: Pick<Product, "id" | "name" | "model" | "brand" | "image" | "catalogCategoryEn">) {
+  if (!product.image.startsWith("catalog-art:") && !product.image.startsWith("catalog-photo:")) {
+    return product.image;
+  }
+
+  const [, family = "marine"] = product.image.split(":");
+  return generatedCatalogPhotos[family] || generatedCatalogPhotos.marine;
+}
+
 function imageKindForCategory(categoryId: string): keyof typeof imagePalettes {
   if (categoryId === "engine-room" || categoryId === "gasoline-boat-engine") return "engine";
   if (categoryId === "electronic") return "electrical";
@@ -136,18 +273,18 @@ const categoryImages: Record<string, string> = {
 };
 
 const productImages: Record<string, string> = {
-  "p-001": "/media/product-pump.webp",
-  "p-002": "/media/product-generator.webp",
-  "p-003": "/media/product-radar.webp",
-  "p-004": "/media/product-anchor.webp",
-  "p-005": "/media/product-extinguisher.webp",
-  "p-006": "/media/product-turbo.webp",
-  "p-007": "/media/product-sonar.webp",
-  "p-008": "/media/product-battery.webp",
-  "p-009": "/media/product-fuel-pump.webp",
-  "p-010": "/media/product-lifejacket.webp",
-  "p-011": "/media/product-gearbox.webp",
-  "p-012": "/media/product-paint.webp",
+  "p-001": generatedCatalogPhotos.pump,
+  "p-002": generatedCatalogPhotos.electrical,
+  "p-003": generatedCatalogPhotos.radar,
+  "p-004": generatedCatalogPhotos.deck,
+  "p-005": generatedCatalogPhotos.safety,
+  "p-006": generatedCatalogPhotos["engine-parts"],
+  "p-007": generatedCatalogPhotos.radar,
+  "p-008": generatedCatalogPhotos.battery,
+  "p-009": generatedCatalogPhotos.pump,
+  "p-010": generatedCatalogPhotos.safety,
+  "p-011": generatedCatalogPhotos.gear,
+  "p-012": generatedCatalogPhotos.material,
 };
 
 function normalizeImage(image: string | undefined, title: string, categoryId: string, productId?: string) {
@@ -248,7 +385,7 @@ export const productGroups: ProductGroup[] = [
   { id: "electrical", name: "الکتریکال", icon: "Zap", image: "/media/product-battery.webp", categoryId: "electronic" },
   { id: "safety-rescue", name: "ایمنی و نجات", icon: "Shield", image: "/media/product-lifejacket.webp", categoryId: "rescue-safety" },
   { id: "sensors", name: "انواع حسگرها", icon: "Radar", image: "/media/product-sonar.webp", categoryId: "electronic" },
-  { id: "pumps-purifiers", name: "پمپ‌ها و تصفیه‌کننده‌ها", icon: "RefreshCw", image: "/media/product-pump.webp", categoryId: "engine-room" },
+  { id: "pumps-purifiers", name: "پمپ‌ها و تصفیه‌کننده‌ها", icon: "RefreshCw", image: generatedCatalogPhotos.pump, categoryId: "engine-room" },
   { id: "accommodation-galley", name: "تجهیزات رفاهی و آشپزخانه", icon: "Utensils", image: "/media/cat-other.webp", categoryId: "other-marine-equipment" },
   { id: "telecommunications", name: "مخابرات و ارتباطات", icon: "Radio", image: "/media/cat-navigation.webp", categoryId: "radar-communications" },
   { id: "hydraulic", name: "هیدرولیک", icon: "Settings", image: "/media/cat-rudder.webp", categoryId: "marine-rudder" },
@@ -436,7 +573,7 @@ export const vesselTypes = [
   "سایر شناورها",
 ];
 
-export const products: Product[] = [
+const featuredProducts: Product[] = [
   {
     id: "p-001",
     name: "پمپ سیرکولاسیون آب خنک‌کننده موتور دیزل دریایی MWP-350",
@@ -835,6 +972,95 @@ export const products: Product[] = [
     leadTime: 2,
   },
 ];
+
+const mockSellers = [
+  { id: "s-01", name: "تأمین قطعات خلیج", score: 4.9 },
+  { id: "s-02", name: "الکترو مارین پارس", score: 4.7 },
+  { id: "s-03", name: "ناوبران دریا", score: 4.95 },
+  { id: "s-04", name: "ایمن دریا", score: 4.85 },
+  { id: "s-05", name: "موتورهای دریایی پارس", score: 4.8 },
+];
+
+function buildSheetProduct(record: SheetCatalogRecord, index: number, suffix = ""): Product {
+  const productGroupId = mapSheetGroupToLegacyProductGroup(record.group);
+  const availableSubcategories = getDetailedSubcategoriesForProductGroup(productGroupId);
+  const seller = mockSellers[index % mockSellers.length];
+  const catalogGroupId = getSheetCatalogGroupId(record);
+  const catalogSubgroupId = getSheetCatalogSubgroupId(record);
+  const condition: Product["condition"] = index % 17 === 0 ? "refurbished" : index % 29 === 0 ? "used" : "new";
+  const identity = suffix ? `${record.id}-${suffix}` : record.id;
+
+  return {
+    id: `catalog-${identity}`,
+    name: record.category,
+    categoryId: getCategoryIdForProductGroup(productGroupId),
+    productGroupId,
+    subcategoryId: availableSubcategories[index % Math.max(1, availableSubcategories.length)]?.id || "",
+    brand: record.brand,
+    model: record.model,
+    country: record.country || "نامشخص",
+    price: 24_000_000 + (index % 37) * 6_750_000,
+    hasPrice: index % 13 !== 0,
+    image: `catalog-photo:${catalogVisualFamily(record)}:${identity}`,
+    gallery: [],
+    rating: Math.round((4.1 + (index % 9) / 10) * 10) / 10,
+    reviewCount: 4 + (index % 48),
+    sellerId: seller.id,
+    sellerName: seller.name,
+    sellerScore: seller.score,
+    stock: 3 + (index % 12) * 5,
+    vesselTypes: [
+      vesselTypes[index % (vesselTypes.length - 1)],
+      vesselTypes[(index + 5) % (vesselTypes.length - 1)],
+    ],
+    condition,
+    shortDesc: `${record.category} برند ${record.brand}، مدل ${record.model}`,
+    description: `${record.category} از گروه ${record.group} و زیرگروه ${record.subgroup}. اطلاعات برند، مدل و کشور سازنده مستقیماً از فایل مرجع کاتالوگ بارگذاری شده است.`,
+    specs: {
+      "گروه اصلی": record.group,
+      زیرگروه: record.subgroup,
+      "نوع کالا": record.category,
+      برند: record.brand,
+      "مدل / خانواده محصول": record.model,
+      "کشور سازنده": record.country || "نامشخص",
+    },
+    leadTime: 1 + (index % 9),
+    tags: [record.group, record.subgroup, record.category, record.brand, record.model],
+    status: "published",
+    workflowType: "seed",
+    createdAt: new Date(2026, index % 6, (index % 27) + 1).toISOString(),
+    catalogGroupId,
+    catalogGroupName: record.group,
+    catalogSubgroupId,
+    catalogSubgroupName: record.subgroup,
+    catalogCategory: record.category,
+    catalogCategoryEn: record.categoryEn,
+    catalogSource: record.source,
+  };
+}
+
+function buildMockCatalog(): Product[] {
+  const catalog = sheetCatalogRecords.map((record, index) => buildSheetProduct(record, index));
+  const subgroupRecords = new Map<string, SheetCatalogRecord[]>();
+
+  sheetCatalogRecords.forEach((record) => {
+    const key = getSheetCatalogSubgroupId(record);
+    subgroupRecords.set(key, [...(subgroupRecords.get(key) || []), record]);
+  });
+
+  subgroupRecords.forEach((records, subgroupId) => {
+    const currentCount = catalog.filter((product) => product.catalogSubgroupId === subgroupId).length;
+    for (let index = currentCount; index < 10; index += 1) {
+      const sourceRecord = records[index % records.length];
+      catalog.push(buildSheetProduct(sourceRecord, catalog.length, `supplement-${index + 1}`));
+    }
+  });
+
+  return catalog;
+}
+
+export const mockProducts = buildMockCatalog();
+export const products: Product[] = [...featuredProducts, ...mockProducts];
 
 const legacyCategoryMap: Record<string, { categoryId: string; productGroupId: string; subcategoryId?: string }> = {
   engine: { categoryId: "engine-room", productGroupId: "propulsion", subcategoryId: "engine" },

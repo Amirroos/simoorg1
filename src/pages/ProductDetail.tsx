@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   Package,
 } from "lucide-react";
-import { detailedSubcategories, formatPriceToman, productGroups } from "../data/products";
+import { detailedSubcategories, formatPriceToman, getProductImageSource, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 import { ProductCard } from "../components/ProductCard";
 import { formatPersianDate } from "../utils/persianDate";
@@ -125,12 +125,12 @@ export function ProductDetail() {
             >
               <div className="relative aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100">
                 <img
-                  src={product.image}
+                  src={getProductImageSource(product)}
                   alt={product.name}
                   className="w-full h-full object-cover"
                   onError={(event) => {
-                    if (event.currentTarget.src.endsWith("/media/product-pump.webp")) return;
-                    event.currentTarget.src = "/media/product-pump.webp";
+                    if (event.currentTarget.src.endsWith("/media/catalog-generated/marine.jpg")) return;
+                    event.currentTarget.src = "/media/catalog-generated/marine.jpg";
                   }}
                 />
                 {/* Badges */}

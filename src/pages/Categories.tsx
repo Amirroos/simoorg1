@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { productGroups, detailedSubcategoryGroups } from "../data/products";
+import { productGroups, detailedSubcategoryGroups, getProductImageSource } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 import {
   Zap,
@@ -115,11 +115,11 @@ export function Categories() {
                       <Link key={product.id} to={`/product/${product.id}`} className="flex-shrink-0 w-28">
                         <div className="relative aspect-square rounded-xl overflow-hidden mb-2 bg-slate-100">
                           <img
-                            src={product.image}
+                            src={getProductImageSource(product)}
                             alt={product.name}
                             className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                             onError={(event) => {
-                              event.currentTarget.src = "/media/product-pump.webp";
+                              event.currentTarget.src = "/media/catalog-generated/marine.jpg";
                             }}
                           />
                         </div>

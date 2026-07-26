@@ -24,8 +24,12 @@ export function SellerRFQs() {
     );
   };
 
-  // کالای خارج از فهرست برای همه تامین‌کنندگان است؛ استعلام قیمت کالای موجود فقط برای تامین‌کننده همان کالا.
-  const availableRfqs = rfqs.filter(r => r.status !== "closed" && sellerMatchesProductRFQ(r));
+  // درخواست فقط پس از تأیید ادمین وارد کارتابل می‌شود؛ نتیجه نیز برای تأمین‌کننده پاسخ‌دهنده باقی می‌ماند.
+  const availableRfqs = rfqs.filter((r) => {
+    if (!sellerMatchesProductRFQ(r)) return false;
+    if (r.status === "open") return true;
+    return r.bids.some((bid) => bid.sellerId === user.id) && ["offer_ready", "buyer_approved", "closed"].includes(r.status);
+  });
 
   const handleBid = (e: React.FormEvent, rfqId: string) => {
     e.preventDefault();
@@ -83,9 +87,9 @@ export function SellerRFQs() {
                       </div>
                     </div>
                     {myBid ? (
-                      <div className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold flex items-center gap-1 border border-emerald-100">
+                      <div className={`px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border ${myBid.status === "selected" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : myBid.status === "rejected" ? "bg-slate-100 text-slate-600 border-slate-200" : "bg-amber-50 text-amber-700 border-amber-100"}`}>
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        پیشنهاد داده‌اید
+                        {myBid.status === "selected" ? "پیشنهاد شما منتخب شد" : myBid.status === "rejected" ? "استعلام پایان یافت" : "پیشنهاد در انتظار ادمین"}
                       </div>
                     ) : (
                       <button

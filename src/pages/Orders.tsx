@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Package, Clock, CheckCircle2, Truck, ShoppingBag, X } from "lucide-react";
 import { useApp } from "../contexts/AppContext";
-import { formatPriceToman } from "../data/products";
+import { formatPriceToman, getProductImageSource } from "../data/products";
 import { formatPersianDate } from "../utils/persianDate";
 
 export function Orders() {
@@ -117,7 +117,7 @@ export function Orders() {
                   {order.items.map((item) => (
                     <div key={item.product.id} className="flex items-center gap-3">
                       <img
-                        src={item.product.image}
+                        src={getProductImageSource(item.product)}
                         alt={item.product.name}
                         className="w-14 h-14 rounded-lg object-cover"
                       />

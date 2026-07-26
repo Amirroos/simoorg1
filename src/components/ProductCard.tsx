@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Heart, ShoppingCart, Star, CheckCircle2, Truck } from "lucide-react";
 import type { Product } from "../data/products";
-import { formatPriceToman, productGroups } from "../data/products";
+import { formatPriceToman, getProductImageSource, productGroups } from "../data/products";
 import { useApp } from "../contexts/AppContext";
 
 interface ProductCardProps {
@@ -30,13 +30,13 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
         data-product-id={product.id}
       >
         <img
-          src={product.image}
+          src={getProductImageSource(product)}
           alt={product.name}
           className="product-card-img w-full h-full object-cover"
           loading="lazy"
           onError={(event) => {
-            if (event.currentTarget.src.endsWith("/media/product-pump.webp")) return;
-            event.currentTarget.src = "/media/product-pump.webp";
+            if (event.currentTarget.src.endsWith("/media/catalog-generated/marine.jpg")) return;
+            event.currentTarget.src = "/media/catalog-generated/marine.jpg";
           }}
         />
         {/* Badges */}

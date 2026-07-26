@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart, Search, Eye, Package, Truck, CheckCircle2, Clock, X } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
-import { formatPriceToman } from "../../data/products";
+import { formatPriceToman, getProductImageSource } from "../../data/products";
 import { formatPersianDate } from "../../utils/persianDate";
 
 export function AdminOrders() {
@@ -164,7 +164,7 @@ export function AdminOrders() {
                           <div className="space-y-2">
                             {o.items.map((item) => (
                               <div key={item.product.id} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50">
-                                <img src={item.product.image} alt={item.product.name} className="w-10 h-10 rounded object-cover" />
+                                <img src={getProductImageSource(item.product)} alt={item.product.name} className="w-10 h-10 rounded object-cover" />
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-semibold text-slate-800 line-clamp-1">{item.product.name}</div>
                                   <div className="text-[10px] text-slate-500">

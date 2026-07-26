@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronDown,
@@ -8,6 +8,7 @@ import {
   List,
   Package,
   PackageSearch,
+  Send,
   RotateCcw,
   Search,
   SlidersHorizontal,
@@ -72,8 +73,8 @@ function deliveryLabel(value: DeliveryStatus) {
 export function Products() {
   const { products } = useApp();
   const [params, setParams] = useSearchParams();
-  const [search, setSearch] = useState("");
-  const [searchDraft, setSearchDraft] = useState("");
+  const [search, setSearch] = useState(params.get("q") || "");
+  const [searchDraft, setSearchDraft] = useState(params.get("q") || "");
   const [sortBy, setSortBy] = useState<SortBy>(params.get("sort") === "new" ? "newest" : "popular");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
@@ -452,6 +453,25 @@ export function Products() {
             </div>
           </div>
         </div>
+
+        <section className="relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-l from-cyan-950 via-blue-950 to-slate-950 px-5 py-6 text-white shadow-xl md:px-8">
+          <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-cyan-400/20 blur-3xl" />
+          <div className="absolute -bottom-20 left-1/4 h-44 w-44 rounded-full bg-blue-500/20 blur-3xl" />
+          <PackageSearch className="absolute -left-6 -bottom-8 h-40 w-40 -rotate-12 text-white/[0.06]" />
+          <div className="relative flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
+            <div className="flex items-start gap-4">
+              <div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-cyan-200 sm:flex"><Package className="h-7 w-7" /></div>
+              <div>
+                <div className="mb-1 text-xs font-black text-cyan-300">کالای موردنظر در فهرست نیست؟</div>
+                <h2 className="text-xl font-black md:text-2xl">درخواست تأمین اختصاصی ثبت کنید</h2>
+                <p className="mt-2 max-w-2xl text-xs leading-6 text-slate-300 md:text-sm">مشخصات کالا را وارد کنید؛ تیم فروش بررسی می‌کند، از تأمین‌کنندگان استعلام می‌گیرد و فقط پیشنهاد تأییدشده را برای شما منتشر می‌کند.</p>
+              </div>
+            </div>
+            <Link to="/product-request" className="inline-flex min-w-max items-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-cyan-950 shadow-xl transition hover:-translate-y-0.5 hover:bg-cyan-50">
+              <Send className="h-4 w-4" /> درخواست کالا
+            </Link>
+          </div>
+        </section>
 
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center">

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Clock, Truck, CheckCircle2, Package } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { useSellerProducts } from "./SellerLayout";
-import { formatPriceToman } from "../../data/products";
+import { formatPriceToman, getProductImageSource } from "../../data/products";
 import { formatPersianDate } from "../../utils/persianDate";
 
 export function SellerOrders() {
@@ -81,7 +81,7 @@ export function SellerOrders() {
                 <div className="space-y-2 mb-3">
                   {o.myItems.map((item) => (
                     <div key={item.product.id} className="flex items-center gap-3 p-2 rounded-lg bg-slate-50">
-                      <img src={item.product.image} alt="" className="w-12 h-12 rounded object-cover" />
+                      <img src={getProductImageSource(item.product)} alt="" className="w-12 h-12 rounded object-cover" />
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-semibold text-slate-800 line-clamp-1">{item.product.name}</div>
                         <div className="text-xs text-slate-500">

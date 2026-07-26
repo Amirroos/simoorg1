@@ -22,6 +22,7 @@ import {
   formatPriceToman,
   getCategoryIdForProductGroup,
   getDetailedSubcategoriesForProductGroup,
+  getProductImageSource,
   marineImage,
   productGroups,
   vesselTypes,
@@ -794,7 +795,7 @@ function ProductTable({
               >
                 <td className="px-4 py-3 border border-slate-200 align-top">
                   <div className="flex items-center gap-3">
-                    <img src={product.image} alt={product.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+                    <img src={getProductImageSource(product)} alt={product.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
                     <div className="min-w-0">
                       <div className="font-bold text-slate-800 line-clamp-1">{product.name}</div>
                       <div className="text-xs text-slate-500">{product.brand} • {product.model}</div>
@@ -912,7 +913,7 @@ function ProductInfoModal({ product, onClose }: { product: Product; onClose: () 
   return (
     <Modal onClose={onClose} title="مشاهده اطلاعات محصول تامین‌کننده">
       <div className="grid md:grid-cols-[220px_1fr] gap-5">
-        <img src={product.image} alt={product.name} className="w-full aspect-square rounded-2xl object-cover bg-slate-100" />
+        <img src={getProductImageSource(product)} alt={product.name} className="w-full aspect-square rounded-2xl object-cover bg-slate-100" />
         <div className="space-y-3">
           <InfoRow label="نام محصول" value={product.name} />
           <InfoRow label="برند / مدل" value={`${product.brand} / ${product.model || "-"}`} />

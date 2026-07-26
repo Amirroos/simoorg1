@@ -19,7 +19,7 @@ const menu = [
   { to: "/seller/products", label: "محصولات من", icon: Package },
   { to: "/seller/admin-requests", label: "درخواست‌های ادمین", icon: ClipboardList },
   { to: "/seller/products/new", label: "افزودن محصول", icon: PlusCircle },
-  { to: "/seller/rfqs", label: "مناقصات و استعلام‌ها", icon: FileSearch },
+  { to: "/seller/rfqs", label: "کارتابل استعلام کالا", icon: FileSearch },
   { to: "/seller/orders", label: "سفارش‌ها", icon: ShoppingCart },
   { to: "/seller/profile", label: "پروفایل", icon: Settings },
 ];

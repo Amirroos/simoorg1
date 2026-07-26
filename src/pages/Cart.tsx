@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trash2, Minus, Plus, ShoppingBag, ArrowLeft, CheckCircle2, MapPin, Truck, CreditCard, AlertCircle } from "lucide-react";
 import { useApp } from "../contexts/AppContext";
-import { formatPriceToman } from "../data/products";
+import { formatPriceToman, getProductImageSource } from "../data/products";
 
 export function Cart() {
   const { cart, updateQty, removeFromCart, clearCart, user, checkout } = useApp();
@@ -138,7 +138,7 @@ export function Cart() {
               >
                 <Link to={`/product/${item.product.id}`} className="flex-shrink-0">
                   <img
-                    src={item.product.image}
+                    src={getProductImageSource(item.product)}
                     alt={item.product.name}
                     className="w-24 h-24 md:w-32 md:h-32 rounded-xl object-cover"
                   />

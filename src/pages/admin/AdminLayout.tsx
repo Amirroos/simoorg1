@@ -43,7 +43,7 @@ const menu: AdminMenuItem[] = [
   { to: "/admin/sellers", label: "تأمین‌کنندگان", icon: Store },
   { to: "/admin/users", label: "کاربران", icon: Users },
   { to: "/admin/orders", label: "سفارش‌ها", icon: ShoppingCart },
-  { to: "/admin/rfqs", label: "مناقصات و استعلام‌ها", icon: FileSearch },
+  { to: "/admin/rfqs", label: "درخواست کالا و استعلام‌ها", icon: FileSearch },
   { to: "/admin/reports", label: "گزارش‌ها", icon: BarChart3 },
   { to: "/admin/settings", label: "تنظیمات", icon: Settings },
 ];

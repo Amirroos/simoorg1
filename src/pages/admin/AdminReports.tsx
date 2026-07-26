@@ -11,7 +11,7 @@ import {
   Award,
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
-import { formatPriceToman, productGroups } from "../../data/products";
+import { formatPriceToman, getProductImageSource, productGroups } from "../../data/products";
 
 export function AdminReports() {
   const { products, users, orders } = useApp();
@@ -156,7 +156,7 @@ export function AdminReports() {
                     i === 2 ? "bg-orange-100 text-orange-700" :
                     "bg-slate-100 text-slate-500"
                   }`}>{(i + 1).toLocaleString("fa-IR")}</div>
-                  <img src={p.product.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                  <img src={getProductImageSource(p.product)} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold text-slate-800 line-clamp-1">{p.product.name}</div>
                     <div className="text-[10px] text-slate-500">{p.qty.toLocaleString("fa-IR")} عدد فروخته شد</div>

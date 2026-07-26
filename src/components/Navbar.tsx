@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   ShoppingCart,
@@ -26,6 +26,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [panelMenu, setPanelMenu] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const loc = useLocation();
   const seafarerRank = user?.maritimeProfile?.rank?.trim();
   const firstName = user?.name?.trim().split(/\s+/)[0] || "";
@@ -34,6 +35,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
   const navLinks = [
     { to: "/", label: "خانه" },
     { to: "/products", label: "فروشگاه محصولات" },
+    { to: "/product-request", label: "ثبت درخواست" },
     { to: "/rfq", label: "دریا یار" },
   ];
 
@@ -43,10 +45,24 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
     navLinks.push({ to: "/orders", label: "سفارش‌های من" });
   }
 
+  useEffect(() => {
+    const syncScrollState = () => setIsScrolled(window.scrollY > 24);
+    syncScrollState();
+    window.addEventListener("scroll", syncScrollState, { passive: true });
+    return () => window.removeEventListener("scroll", syncScrollState);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 shadow-lg">
+    <header className={`sticky top-0 z-50 overflow-visible transition-all duration-500 ${isScrolled ? "shadow-2xl shadow-slate-950/25" : "shadow-lg"}`}>
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-700 ${isScrolled ? "opacity-100" : "opacity-0"}`}
+      >
+        <img src="/media/hero-sea.gif" alt="" className="h-full w-full object-fill opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/45 via-cyan-950/20 to-slate-950/50" />
+      </div>
       {/* Top utility strip */}
-      <div className="bg-slate-950 text-slate-300 text-xs">
+      <div className={`relative z-10 text-slate-200 text-xs transition-colors duration-500 ${isScrolled ? "border-b border-white/10 bg-slate-950/20 backdrop-blur-sm" : "bg-slate-950"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-9 flex items-center justify-between">
           <div className="hidden sm:flex items-center gap-4">
             <span className="flex items-center gap-1.5">
@@ -118,7 +134,7 @@ export function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       {/* Main navbar */}
-      <div className="glass-dark">
+      <div className={`relative z-10 transition-all duration-500 ${isScrolled ? "border-b border-white/15 bg-slate-950/15 backdrop-blur-lg" : "glass-dark"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}

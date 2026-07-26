@@ -8,6 +8,7 @@ import { AuthModal } from "./components/AuthModal";
 // public pages
 import { Home } from "./pages/Home";
 import { Products } from "./pages/Products";
+import { ProductRequest } from "./pages/ProductRequest";
 import { ProductDetail } from "./pages/ProductDetail";
 import { Cart } from "./pages/Cart";
 import { RFQ } from "./pages/RFQ";
@@ -39,11 +40,15 @@ import { SellerProfile } from "./pages/seller/SellerProfile";
 import { SellerRFQs } from "./pages/seller/SellerRFQs";
 
 function ScrollToTop() {
-  const { pathname, search } = useLocation();
+  const { pathname, search, hash } = useLocation();
 
   useEffect(() => {
+    if (hash) {
+      requestAnimationFrame(() => document.querySelector(hash)?.scrollIntoView({ block: "start" }));
+      return;
+    }
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-  }, [pathname, search]);
+  }, [pathname, search, hash]);
 
   return null;
 }
@@ -56,6 +61,7 @@ function PublicLayout({ onOpenAuth }: { onOpenAuth: () => void }) {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/product-request" element={<ProductRequest />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/categories" element={<Products />} />
           <Route path="/cart" element={<Cart />} />

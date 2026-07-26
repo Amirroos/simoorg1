@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../../contexts/AppContext";
 import { useSellerProducts } from "./SellerLayout";
-import { formatPriceToman } from "../../data/products";
+import { formatPriceToman, getProductImageSource } from "../../data/products";
 
 export function SellerProducts() {
   const { deleteProduct, updateProduct } = useApp();
@@ -83,7 +83,7 @@ export function SellerProducts() {
               className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition"
             >
               <div className="relative aspect-video bg-slate-100">
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                <img src={getProductImageSource(product)} alt={product.name} className="w-full h-full object-cover" />
                 {product.stock === 0 && (
                   <div className="absolute inset-0 bg-rose-500/80 flex items-center justify-center">
                     <span className="px-4 py-1.5 rounded-full bg-white text-rose-600 font-bold text-sm flex items-center gap-1">

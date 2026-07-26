@@ -87,6 +87,7 @@ export interface RFQBid {
   price: number;
   description: string;
   createdAt: string;
+  status?: "pending" | "selected" | "rejected";
 }
 
 export interface RFQ {
@@ -98,6 +99,9 @@ export interface RFQ {
   productName?: string;
   productSellerId?: string;
   productSellerName?: string;
+  brand?: string;
+  model?: string;
+  condition?: Product["condition"];
   title: string;
   categoryId: string;
   productGroupId?: string;
@@ -108,9 +112,16 @@ export interface RFQ {
   deliveryLocation: string;
   description: string;
   items: RFQItem[];
-  status: "open" | "published" | "closed";
+  status: "pending_admin" | "open" | "offer_ready" | "buyer_approved" | "published" | "closed";
   bids: RFQBid[];
   createdAt: string;
+  adminReviewedAt?: string;
+  selectedBidId?: string;
+  finalPrice?: number;
+  adminNote?: string;
+  releasedAt?: string;
+  buyerApprovedAt?: string;
+  orderId?: string;
 }
 
 export interface AdminProductRequest {
@@ -138,10 +149,7 @@ export interface AdminProductRequest {
 }
 
 export function isRFQPublished(rfq: RFQ) {
-  if (rfq.status === "published" || rfq.status === "closed") return true;
-  const createdAt = new Date(rfq.createdAt).getTime();
-  const sevenDays = 7 * 24 * 60 * 60 * 1000;
-  return Date.now() - createdAt >= sevenDays;
+  return ["offer_ready", "buyer_approved", "published", "closed"].includes(rfq.status);
 }
 
 interface AppState {
@@ -197,6 +205,9 @@ interface AppState {
   addRFQ: (data: Omit<RFQ, "id" | "status" | "bids" | "createdAt" | "buyerId" | "buyerName">) => RFQ | null;
   addRFQBid: (rfqId: string, bidData: { price: number; description: string }) => void;
   publishRFQ: (rfqId: string) => void;
+  forwardRFQToSuppliers: (rfqId: string) => void;
+  selectRFQBid: (rfqId: string, bidId: string, finalPrice: number, adminNote?: string) => void;
+  confirmRFQPurchase: (rfqId: string, address: string) => Order | null;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -342,6 +353,37 @@ function loadStored<T>(key: string, fallback: T): T {
   }
 }
 
+const PRODUCT_CATALOG_VERSION = "photo-catalog-v5";
+
+function loadInitialProducts() {
+  const storedProducts = loadStored<Product[]>("simorgh_products", []);
+  const appliedVersion = localStorage.getItem("simorgh_product_catalog_version");
+
+  if (storedProducts.length === 0) {
+    localStorage.setItem("simorgh_product_catalog_version", PRODUCT_CATALOG_VERSION);
+    return seedProducts.map(normalizeProductTaxonomy);
+  }
+
+  if (appliedVersion === PRODUCT_CATALOG_VERSION) {
+    return storedProducts.map(normalizeProductTaxonomy);
+  }
+
+  const seedById = new Map(seedProducts.map((product) => [product.id, product]));
+  const retainedProducts = storedProducts
+    .filter((product) => !product.id.startsWith("mock-") && !product.id.startsWith("catalog-"))
+    .map((product) => {
+      const seedProduct = seedById.get(product.id);
+      return seedProduct ? { ...product, image: seedProduct.image } : product;
+    });
+  const storedIds = new Set(retainedProducts.map((product) => product.id));
+  const mergedProducts = [
+    ...retainedProducts,
+    ...seedProducts.filter((product) => !storedIds.has(product.id)),
+  ];
+  localStorage.setItem("simorgh_product_catalog_version", PRODUCT_CATALOG_VERSION);
+  return mergedProducts.map(normalizeProductTaxonomy);
+}
+
 function normalizeAdminProductRequest(request: Partial<AdminProductRequest>): AdminProductRequest {
   const productGroupId = request.productGroupId || "";
   return {
@@ -355,7 +397,7 @@ function normalizeAdminProductRequest(request: Partial<AdminProductRequest>): Ad
     model: request.model || "",
     country: request.country || "ایران",
     hasPrice: request.hasPrice ?? true,
-    image: request.image || "/media/product-pump.webp",
+    image: request.image || "/media/catalog-generated/marine.jpg",
     vesselTypes: request.vesselTypes?.length ? request.vesselTypes : ["سایر شناورها"],
     condition: request.condition || "new",
     shortDesc: request.shortDesc || request.description || request.title || "درخواست تامین محصول",
@@ -372,9 +414,7 @@ function normalizeAdminProductRequest(request: Partial<AdminProductRequest>): Ad
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => loadStored<User | null>("simorgh_user", null));
   const [users, setUsers] = useState<User[]>(() => loadStored<User[]>("simorgh_users", SEED_USERS));
-  const [products, setProducts] = useState<Product[]>(() =>
-    loadStored<Product[]>("simorgh_products", seedProducts).map(normalizeProductTaxonomy)
-  );
+  const [products, setProducts] = useState<Product[]>(loadInitialProducts);
   const [adminProductRequests, setAdminProductRequests] = useState<AdminProductRequest[]>(() =>
     loadStored<AdminProductRequest[]>("simorgh_admin_product_requests", []).map(normalizeAdminProductRequest)
   );
@@ -765,7 +805,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       id: "RFQ-" + Date.now().toString().slice(-6),
       buyerId: user.id,
       buyerName: user.name,
-      status: "open",
+      status: "pending_admin",
       bids: [],
       createdAt: new Date().toISOString(),
     };
@@ -776,7 +816,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addRFQBid: AppState["addRFQBid"] = (rfqId, bidData) => {
     if (!user || user.role !== "seller") return;
     setRfqs(prev => prev.map(r => {
-      if (r.id !== rfqId) return r;
+      if (r.id !== rfqId || r.status !== "open") return r;
       const existingIdx = r.bids.findIndex(b => b.sellerId === user.id);
       const newBid: RFQBid = {
         id: "BID-" + Date.now(),
@@ -784,7 +824,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sellerName: user.companyName || user.name,
         price: bidData.price,
         description: bidData.description,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        status: "pending",
       };
       const newBids = [...r.bids];
       if (existingIdx >= 0) {
@@ -798,6 +839,90 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const publishRFQ: AppState["publishRFQ"] = (rfqId) => {
     setRfqs(prev => prev.map(r => r.id === rfqId ? { ...r, status: "published" } : r));
+  };
+
+  const forwardRFQToSuppliers: AppState["forwardRFQToSuppliers"] = (rfqId) => {
+    if (!user || user.role !== "admin") return;
+    setRfqs((prev) => prev.map((rfq) => (
+      rfq.id === rfqId && rfq.status === "pending_admin"
+        ? { ...rfq, status: "open", adminReviewedAt: new Date().toISOString() }
+        : rfq
+    )));
+  };
+
+  const selectRFQBid: AppState["selectRFQBid"] = (rfqId, bidId, finalPrice, adminNote) => {
+    if (!user || user.role !== "admin" || finalPrice <= 0) return;
+    setRfqs((prev) => prev.map((rfq) => {
+      if (rfq.id !== rfqId || rfq.status !== "open" || !rfq.bids.some((bid) => bid.id === bidId)) return rfq;
+      return {
+        ...rfq,
+        status: "offer_ready",
+        selectedBidId: bidId,
+        finalPrice,
+        adminNote: adminNote?.trim(),
+        releasedAt: new Date().toISOString(),
+        bids: rfq.bids.map((bid) => ({ ...bid, status: bid.id === bidId ? "selected" : "rejected" })),
+      };
+    }));
+  };
+
+  const confirmRFQPurchase: AppState["confirmRFQPurchase"] = (rfqId, address) => {
+    if (!user || user.role !== "buyer" || !address.trim()) return null;
+    const rfq = rfqs.find((item) => item.id === rfqId && item.buyerId === user.id && item.status === "offer_ready");
+    const selectedBid = rfq?.bids.find((bid) => bid.id === rfq.selectedBidId);
+    if (!rfq || !selectedBid) return null;
+
+    const requestedItem = rfq.items[0];
+    const quantity = Math.max(1, requestedItem?.qty || 1);
+    const finalTotal = rfq.finalPrice || selectedBid.price;
+    const privateProduct: Product = {
+      id: `rfq-product-${rfq.id}`,
+      name: requestedItem?.name || rfq.productName || rfq.title,
+      categoryId: rfq.categoryId,
+      productGroupId: rfq.productGroupId,
+      subcategoryId: rfq.subcategoryId,
+      brand: rfq.brand || "سفارشی",
+      model: rfq.model || "طبق درخواست",
+      country: "طبق پیشنهاد تأمین‌کننده",
+      price: finalTotal / quantity,
+      hasPrice: true,
+      image: "/media/catalog-generated/marine.jpg",
+      gallery: [],
+      rating: 5,
+      reviewCount: 0,
+      sellerId: selectedBid.sellerId,
+      sellerName: "سیمرغ تأمین دریا",
+      sellerScore: 5,
+      stock: quantity,
+      vesselTypes: rfq.vesselType ? [rfq.vesselType] : ["سایر شناورها"],
+      condition: rfq.condition || "new",
+      shortDesc: requestedItem?.specs || rfq.description,
+      description: rfq.description,
+      specs: { "شماره درخواست": rfq.id },
+      leadTime: 0,
+      status: "published",
+      workflowType: "supplier_offer",
+      createdAt: new Date().toISOString(),
+    };
+    const order: Order = {
+      id: "ORD-" + Date.now().toString().slice(-8),
+      items: [{ product: privateProduct, qty: quantity }],
+      userId: user.id,
+      userName: user.name,
+      userMobile: user.mobile,
+      status: "paid",
+      total: finalTotal,
+      address: address.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    setOrders((prev) => [order, ...prev]);
+    setRfqs((prev) => prev.map((item) => item.id === rfqId ? {
+      ...item,
+      status: "buyer_approved",
+      buyerApprovedAt: new Date().toISOString(),
+      orderId: order.id,
+    } : item));
+    return order;
   };
 
   return (
@@ -838,6 +963,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addRFQ,
         addRFQBid,
         publishRFQ,
+        forwardRFQToSuppliers,
+        selectRFQBid,
+        confirmRFQPurchase,
       }}
     >
       {children}
